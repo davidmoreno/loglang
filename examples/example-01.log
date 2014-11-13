@@ -1,0 +1,10 @@
+timestamp 1
+mem.free 10
+mem.total 100
+:1 mem.free% = (mem.free * 100.0) / mem.total
+mem.free 9
+mem.free 8
+mem.free 7
+:1
+mem.free 10
+
