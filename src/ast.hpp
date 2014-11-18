@@ -29,14 +29,14 @@ namespace loglang{
 		virtual std::string eval(LogParser &context) = 0;
 	};
 	
-	using AST=std::shared_ptr<ASTBase>;
+	using AST=std::unique_ptr<ASTBase>;
 	
 	namespace ast{
 		class Equal : public ASTBase{
 			Token op1;
 			AST op2;
 		public:
-			Equal(Token op1, AST op2) : op1(op1), op2(op2){}
+			Equal(Token op1, AST op2) : op1(op1), op2(std::move(op2)){}
 			std::string eval(LogParser &context){
 				auto op2_res=op2->eval(context);
 				context.get_value(op1.token).set(op2_res, context);
@@ -51,21 +51,31 @@ namespace loglang{
 				return val.token;
 			}
 		};
+		class Value_var : public Value{
+		public:
+			Value_var(Token _val) : Value(_val) {}
+			std::string eval(LogParser &context){
+				return context.get_value(val.token).get();
+			}
+		};
+		
 		class Expr : public ASTBase{
 		public:
 			AST op1;
 			AST op2;
-			Expr(AST op1, AST op2) : op1(op1), op2(op2){}
+			Expr(AST op1, AST op2) : op1(std::move(op1)), op2(std::move(op2)){}
 		};
 		
 		class Expr_mul : public Expr{
 		public:
+			Expr_mul(AST op1, AST op2) : Expr(std::move(op1), std::move(op2)) {}
 			std::string eval(LogParser &context){
 				return std::to_string( to_number(op1->eval(context)) * to_number(op2->eval(context)) );
 			}
 		};
 		class Expr_div : public Expr{
 		public:
+			Expr_div(AST op1, AST op2) : Expr(std::move(op1), std::move(op2)) {}
 			std::string eval(LogParser &context){
 				return std::to_string( to_number(op1->eval(context)) / to_number(op2->eval(context)) );
 			}

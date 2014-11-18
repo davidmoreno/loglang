@@ -38,8 +38,31 @@ static void expect_token_type(const Token &got, const Token::type_t expect){
 	}
 }
 
-static AST parse_expression(Tokenizer &tokenizer){
-	return std::make_shared<ast::Value>(Token("mem.free% 1.0", Token::NUMBER));
+static AST parse_expression(Tokenizer &tokenizer, Token::type_t end=Token::_EOF){
+	auto tok=tokenizer.next();
+	AST op1;
+	if (tok.type==Token::OPEN_PAREN)
+		op1=parse_expression(tokenizer, Token::CLOSE_PAREN);
+	else if (tok.type==Token::NUMBER || tok.type==Token::STRING)
+		op1=std::make_unique<ast::Value>(tok);
+	else if (tok.type==Token::VAR)
+		op1=std::make_unique<ast::Value_var>(tok);
+	else{
+		std::stringstream s;
+		s<<"Got "<<std::to_string(tok)<<" expected expression";
+		throw unexpected_token_type(s.str());
+	}
+	auto op=tokenizer.next();
+	if (op.type==end)
+		return op1;
+	AST op2=parse_expression(tokenizer, end);
+	
+	if (op.token=="*")
+		return std::make_unique<ast::Expr_mul>(std::move(op1), std::move(op2));
+	else if (op.token=="/")
+		return std::make_unique<ast::Expr_div>(std::move(op1), std::move(op2));
+	else
+		throw unexpected_token_type("Cant parse this type of op yet.");
 }
 
 Program::Program(std::string _sourcecode) : sourcecode(std::move(_sourcecode))
@@ -53,18 +76,19 @@ Program::Program(std::string _sourcecode) : sourcecode(std::move(_sourcecode))
 	expect_token(tok, Token('=',Token::OP));
 	auto op2=parse_expression(tokenizer);
 	
-	ast=std::make_shared<ast::Equal>(op1, op2);
+	ast=std::make_unique<ast::Equal>(op1, std::move(op2));
 	
 	_dependencies.push_back("mem.free");
 	_dependencies.push_back("mem.total");
 	
-	std::cerr<<"Compile: "<<_sourcecode<<std::endl;
+// 	std::cerr<<"Compile: "<<_sourcecode<<std::endl;
 }
 
 void Program::run(LogParser& context)
 {
+// 	std::cerr<<"Run"<<std::endl;
 	if (ast){
 		auto output=ast->eval(context);
-		context.output(output);
+// 		context.output(output);
 	}
 }

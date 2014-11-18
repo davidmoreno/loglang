@@ -15,6 +15,9 @@
  */
 
 #include <iostream>
+#include <sstream>
+#include <string>
+#include <boost/algorithm/string.hpp>
 
 #include "logparser.hpp"
 #include "program.hpp"
@@ -28,8 +31,11 @@ LogParser::LogParser()
 	};
 }
 
-void LogParser::feed(const std::string& data)
+void LogParser::feed(const std::string& _data)
 {
+	auto data=boost::algorithm::trim_copy(_data);
+	if (data.length()==0)
+		return;
 	if (data.length()>0 && data[0]==':'){ // New program
 		auto colonpos=data.find_first_of(' ');
 		auto key=data.substr(0, colonpos);
@@ -54,7 +60,6 @@ void LogParser::feed(const std::string& data)
 		auto spacepos=data.find_first_of(' ');
 		auto key=data.substr(0, spacepos);
 		auto value=data.substr(spacepos+1);
-		output(key+" "+value);
 		get_value(key).set(value, *this);
 	}
 }
@@ -71,4 +76,20 @@ void LogParser::debug_values()
 	for (auto &pair: datastore){
 		std::cout<<pair.first<<" = "<<pair.second.get()<<std::endl;
 	}
+}
+
+void LogParser::output(const std::string& str, const std::string& str2)
+{
+	std::stringstream ss;
+	ss<<str<<" "<<str2;
+	output(ss.str());
+}
+
+DataItem& LogParser::get_value(const std::string& key)
+{
+	auto I=datastore.find(key);
+	if (I!=std::end(datastore))
+		return I->second;
+	auto J=datastore.insert(std::make_pair(key,DataItem(key)));
+	return J.first->second;
 }

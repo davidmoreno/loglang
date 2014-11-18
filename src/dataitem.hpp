@@ -30,6 +30,7 @@ namespace loglang{
 		std::string value;
 		std::string name;
 	public:
+		DataItem(std::string _name);
 		void run_at_modify(std::shared_ptr<Program> at_modify);
 		void remove_program(std::shared_ptr<Program> at_modify);
 		

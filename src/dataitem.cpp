@@ -18,8 +18,15 @@
 
 #include "dataitem.hpp"
 #include "program.hpp"
+#include "logparser.hpp"
 
 using namespace loglang;
+
+DataItem::DataItem(std::string _name) : name(std::move(_name))
+{
+
+}
+
 
 void DataItem::run_at_modify(std::shared_ptr< Program > _at_modify)
 {
@@ -39,6 +46,7 @@ std::string DataItem::get()
 void DataItem::set(const std::string& str, LogParser &context)
 {
 	value=str;
+	context.output(name, value);
 	for(auto program: at_modify)
 		program->run(context);
 }

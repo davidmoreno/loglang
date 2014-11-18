@@ -31,7 +31,8 @@ namespace loglang{
 		void feed(const std::string &data);
 		void set_output(std::function<void (const std::string &output)> &&);
 		void output(const std::string &str){ _output(str); }
-		DataItem &get_value(const std::string &key){ return datastore[key]; }
+		void output(const std::string &str, const std::string &str2);
+		DataItem &get_value(const std::string &key);
 		
 		void debug_values();
 	};
