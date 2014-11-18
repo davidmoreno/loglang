@@ -27,15 +27,20 @@ using namespace loglang;
 LogParser::LogParser()
 {
 	_output=[](const std::string &str){
-		std::cout<<">> "<<str<<std::endl;
+		std::cout<<str<<std::endl;
 	};
 }
 
 void LogParser::feed(const std::string& _data)
 {
-	auto data=boost::algorithm::trim_copy(_data);
+	std::string data=_data;
 	if (data.length()==0)
 		return;
+	if (std::isspace(data[0]))
+		boost::algorithm::trim(data);
+	if (data.length()==0)
+		return;
+	
 	if (data.length()>0 && data[0]==':'){ // New program
 		auto colonpos=data.find_first_of(' ');
 		auto key=data.substr(0, colonpos);
@@ -67,7 +72,7 @@ void LogParser::feed(const std::string& _data)
 
 void LogParser::set_output(std::function<void (const std::string &data)> &&output)
 {
-	_output=_output;
+	_output=output;
 }
 
 
@@ -80,9 +85,7 @@ void LogParser::debug_values()
 
 void LogParser::output(const std::string& str, const std::string& str2)
 {
-	std::stringstream ss;
-	ss<<str<<" "<<str2;
-	output(ss.str());
+	output(str+" "+str2);
 }
 
 DataItem& LogParser::get_value(const std::string& key)

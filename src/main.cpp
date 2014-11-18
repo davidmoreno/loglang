@@ -19,6 +19,8 @@
 
 int main(int argc, char **argv){
 	auto &input=std::cin;
+	input.sync_with_stdio(false);
+	std::cout.sync_with_stdio(false);
 	
 	std::string line;
 	loglang::LogParser parser;
