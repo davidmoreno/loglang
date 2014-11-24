@@ -115,6 +115,27 @@ namespace loglang{
 				return to_number(op1->eval(context)) == to_number(op2->eval(context)) ? "1" : "0";
 			}
 		};
+		class Expr_neq : public Expr{
+		public:
+			Expr_neq(AST op1, AST op2) : Expr(std::move(op1), std::move(op2)) {}
+			std::string eval(LogParser &context){
+				return to_number(op1->eval(context)) != to_number(op2->eval(context)) ? "1" : "0";
+			}
+		};
+		class Expr_add : public Expr{
+		public:
+			Expr_add(AST op1, AST op2) : Expr(std::move(op1), std::move(op2)) {}
+			std::string eval(LogParser &context){
+				return std::to_string( to_number(op1->eval(context)) + to_number(op2->eval(context)) );
+			}
+		};
+		class Expr_sub : public Expr{
+		public:
+			Expr_sub(AST op1, AST op2) : Expr(std::move(op1), std::move(op2)) {}
+			std::string eval(LogParser &context){
+				return std::to_string( to_number(op1->eval(context)) - to_number(op2->eval(context)) );
+			}
+		};
 		
 		class Edge_if : public Expr{
 		public:

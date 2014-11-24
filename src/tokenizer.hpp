@@ -66,14 +66,28 @@ namespace loglang{
 		}
 	};
 	
-	class Tokenizer{
+	class RealTokenizer{
 		std::string data;
 		std::string::iterator pos;
 	public:
-		Tokenizer(std::string str) : data(std::move(str)), pos(std::begin(data)){}
+		RealTokenizer(std::string str) : data(std::move(str)), pos(std::begin(data)){}
 		
 		Token next();
 	};
+#ifdef __DEBUG__
+	class Tokenizer{
+		RealTokenizer real_tokenizer;
+	public:
+		Tokenizer(std::string str) : real_tokenizer(std::move(str)){}
+		Token next(){
+			Token tk=real_tokenizer.next();
+			std::cerr<<tk.token<<std::endl;
+			return tk;
+		}
+	};
+#else
+	using Tokenizer=RealTokenizer;
+#endif
 }
 
 namespace std{

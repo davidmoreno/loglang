@@ -21,15 +21,15 @@
 
 using namespace loglang;
 
-static std::string ops="*/+-%=<>";
-static std::string ops2letter_1="><=";
+static std::string ops="*/+-%=<>!";
+static std::string ops2letter_1="><=!";
 // static std::string ops2letter_2="="; // Just one option, better simple =
 
 static std::set<std::string> extraops{"<=",">=","and","or","=="};
 static std::string number="0123456789.";
 static std::string var_extra_letters="_-%.";
 
-Token Tokenizer::next()
+Token RealTokenizer::next()
 {
 	auto data_end=std::end(data);
 	while (std::isspace(*pos) && pos<data_end) ++pos; // Skip spaces
@@ -69,7 +69,8 @@ Token Tokenizer::next()
 	// For multi char tokens, continue parsing.
 	if (type==Token::STRING){
 		while (*pos!='"' && pos<data_end) ++pos;
-		str=std::string(start, pos);
+		str=std::string(start, pos-1);
+		++pos;
 	}
 	else if (type==Token::NUMBER){
 		while (std::find(std::begin(number), std::end(number), *pos)!=std::end(number) && pos<data_end) ++pos;

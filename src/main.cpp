@@ -15,6 +15,7 @@
  */
 
 #include <iostream>
+#include <fstream>
 #include "logparser.hpp"
 
 int main(int argc, char **argv){
@@ -25,6 +26,19 @@ int main(int argc, char **argv){
 	std::string line;
 	loglang::LogParser parser;
 // 	parser.set_output([](const std::string &output){ std::cout<<">> "<<output<<std::endl; });
+	
+	for(int i=1;i<argc;i++){
+		std::ifstream fin(argv[i],std::ios::in);
+		if (!fin.is_open()){
+			throw std::exception();
+		}
+		while(!fin.eof()){
+			std::getline(fin, line);
+			
+			parser.feed(line);
+		}
+		fin.close();
+	}
 	
 	while(!input.eof()){
 		std::getline(input, line);

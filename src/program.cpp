@@ -92,6 +92,12 @@ static AST parse_expression(Tokenizer &tokenizer, Token::type_t end){
 			return std::make_unique<ast::Expr_lte>(std::move(op1), std::move(op2));
 		else if (op.token=="==")
 			return std::make_unique<ast::Expr_eq>(std::move(op1), std::move(op2));
+		else if (op.token=="!=")
+			return std::make_unique<ast::Expr_neq>(std::move(op1), std::move(op2));
+		else if (op.token=="+")
+			return std::make_unique<ast::Expr_add>(std::move(op1), std::move(op2));
+		else if (op.token=="-")
+			return std::make_unique<ast::Expr_sub>(std::move(op1), std::move(op2));
 		else
 			throw unexpected_token_type("Cant parse this type of op yet. ("+op.token+")");
 	}
