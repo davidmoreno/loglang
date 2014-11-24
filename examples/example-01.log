@@ -5,6 +5,19 @@ mem.total 100
 mem.free 9
 mem.free 8
 mem.free 7
+:2 edge_if mem.free <= 10 then alert.start = 2 else alert.end = 2
 :1
+mem.free 11
+mem.free 9
+mem.free 9
+mem.free 9
+mem.free 9
+mem.free 11
+mem.free 9
 mem.free 10
+mem.free 11
+
+
+
+
 

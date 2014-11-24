@@ -31,6 +31,7 @@ int main(int argc, char **argv){
 		
 		parser.feed(line);
 	}
+	std::cerr<<"---"<<std::endl;
 	parser.debug_values();
 	
 	return 0;

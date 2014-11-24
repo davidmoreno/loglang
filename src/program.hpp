@@ -21,17 +21,23 @@
 #include <memory>
 
 namespace loglang{
-	class unexpected_token_type : public std::exception{
+	class parsing_exception : public std::exception{
 		std::string _str;
 	public:
-		unexpected_token_type(std::string s) : _str(std::move(s)) {};
+		parsing_exception(std::string s) : _str(std::move(s)) {};
 		const char *what() const throw(){ return _str.c_str(); }
 	};
-	class unexpected_token : public std::exception{
-		std::string _str;
+	class unexpected_token_type : public parsing_exception{
 	public:
-		unexpected_token(std::string str) : _str(std::move(str)) {};
-		const char *what() const throw(){ return _str.c_str(); }
+		unexpected_token_type(std::string s) : parsing_exception(s){};
+	};
+	class unexpected_token : public parsing_exception{
+	public:
+		unexpected_token(std::string s) : parsing_exception(s){};
+	};
+	class semantic_exception  :public parsing_exception{
+	public:
+		semantic_exception(std::string s) : parsing_exception(s){};
 	};
 	
 	class LogParser;

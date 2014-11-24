@@ -16,11 +16,16 @@
 
 #include <iostream>
 #include <algorithm>
+#include <set>
 #include "tokenizer.hpp"
 
 using namespace loglang;
 
-static std::string ops="*/+-%=";
+static std::string ops="*/+-%=<>";
+static std::string ops2letter_1="><=";
+// static std::string ops2letter_2="="; // Just one option, better simple =
+
+static std::set<std::string> extraops{"<=",">=","and","or","=="};
 static std::string number="0123456789.";
 static std::string var_extra_letters="_-%.";
 
@@ -43,23 +48,48 @@ Token Tokenizer::next()
 		return Token(*pos++, Token::OPEN_PAREN);
 	else if (*pos==')')
 		return Token(*pos++, Token::CLOSE_PAREN);
-	else if (std::find(std::begin(ops), std::end(ops), *pos)!=std::end(ops))
-		return Token(*pos++, Token::OP);
+	else if (std::find(std::begin(ops), std::end(ops), *pos)!=std::end(ops)){
+		auto c=*pos++;
+		auto tok=Token(c, Token::OP);
+		
+		if (std::find(std::begin(ops), std::end(ops), c)!=std::end(ops2letter_1)){ // 2 letter op (>=, == ...), first part
+			if (*pos=='='){ // 2 letter op (>=, == ...), second part
+				tok.token+=*pos;
+				++pos;
+			}
+		}
+		return tok;
+	}
 	else
 		throw unexpected_char(*pos);
 	auto start=pos;
 	++pos;
 	
+	std::string str;
 	// For multi char tokens, continue parsing.
-	if (type==Token::STRING)
+	if (type==Token::STRING){
 		while (*pos!='"' && pos<data_end) ++pos;
-	else if (type==Token::NUMBER)
+		str=std::string(start, pos);
+	}
+	else if (type==Token::NUMBER){
 		while (std::find(std::begin(number), std::end(number), *pos)!=std::end(number) && pos<data_end) ++pos;
-	else if (type==Token::VAR)
+		str=std::string(start, pos);
+	}
+	else if (type==Token::VAR){
 		while ((std::isalnum(*pos) || std::find(std::begin(var_extra_letters), std::end(var_extra_letters), *pos)!=std::end(var_extra_letters)) && pos<data_end) ++pos; // Skip spaces
-		
-		
-	std::string str(start, pos);
+		str=std::string(start, pos);
+		if (str=="if")
+			type=Token::IF;
+		if (str=="then")
+			type=Token::THEN;
+		if (str=="else")
+			type=Token::ELSE;
+		if (str=="edge_if")
+			type=Token::EDGE_IF;
+		if (std::find(std::begin(extraops), std::end(extraops), str)!=std::end(extraops))
+			type=Token::OP;
+	}
+	
 // 	std::cerr<<"got Token "<<str<<std::endl;
 	
 	return Token(std::move(str), type);

@@ -79,7 +79,7 @@ void LogParser::set_output(std::function<void (const std::string &data)> &&outpu
 void LogParser::debug_values()
 {
 	for (auto &pair: datastore){
-		std::cout<<pair.first<<" = "<<pair.second.get()<<std::endl;
+		std::cerr<<pair.first<<" = "<<pair.second.get()<<std::endl;
 	}
 }
 

@@ -26,19 +26,29 @@ using namespace loglang;
 static void expect_token(const Token &got, const Token &expect){
 	if (got!=expect){
 		std::stringstream s;
-		s<<"Got "<<std::to_string(got)<<" expected "<<std::to_string(expect);
+		s<<"Got "<<std::to_string(got)<<" expected token "<<std::to_string(expect);
 		throw unexpected_token(s.str());
 	}
 }
 static void expect_token_type(const Token &got, const Token::type_t expect){
 	if (got.type!=expect){
 		std::stringstream s;
-		s<<"Got "<<std::to_string(got)<<" expected "<<std::to_string(expect);
+		s<<"Got "<<std::to_string(got)<<" expected token type "<<std::to_string(expect);
 		throw unexpected_token_type(s.str());
 	}
 }
 
-static AST parse_expression(Tokenizer &tokenizer, Token::type_t end=Token::_EOF){
+
+static AST parse_expression(Tokenizer &tokenizer, Token::type_t end);
+
+static AST parse_edge_if(Tokenizer &tokenizer, Token::type_t end){
+	AST cond=parse_expression(tokenizer, Token::THEN);
+	AST if_true=parse_expression(tokenizer, Token::ELSE);
+	AST if_false=parse_expression(tokenizer, end);
+	return std::make_unique<ast::Edge_if>(std::move(cond), std::move(if_true), std::move(if_false));
+}
+
+static AST parse_expression(Tokenizer &tokenizer, Token::type_t end){
 	auto tok=tokenizer.next();
 	AST op1;
 	if (tok.type==Token::OPEN_PAREN)
@@ -47,6 +57,8 @@ static AST parse_expression(Tokenizer &tokenizer, Token::type_t end=Token::_EOF)
 		op1=std::make_unique<ast::Value>(tok);
 	else if (tok.type==Token::VAR)
 		op1=std::make_unique<ast::Value_var>(tok);
+	else if (tok.type==Token::EDGE_IF)
+		return parse_edge_if(tokenizer, end);
 	else{
 		std::stringstream s;
 		s<<"Got "<<std::to_string(tok)<<" expected expression";
@@ -57,26 +69,41 @@ static AST parse_expression(Tokenizer &tokenizer, Token::type_t end=Token::_EOF)
 		return op1;
 	AST op2=parse_expression(tokenizer, end);
 	
-	if (op.token=="*")
-		return std::make_unique<ast::Expr_mul>(std::move(op1), std::move(op2));
-	else if (op.token=="/")
-		return std::make_unique<ast::Expr_div>(std::move(op1), std::move(op2));
-	else
-		throw unexpected_token_type("Cant parse this type of op yet.");
+	if (op.type==Token::OP){
+		if (op.token=="="){
+			ASTBase *op1p=&*op1;
+			auto var=dynamic_cast<ast::Value_var*>(op1p);
+			if (var==nullptr){
+				throw semantic_exception("lvalue invalid. Only varaibles are allowed.");
+			}
+			return std::make_unique<ast::Equal>(std::move(var->val), std::move(op2));
+		}
+		if (op.token=="*")
+			return std::make_unique<ast::Expr_mul>(std::move(op1), std::move(op2));
+		else if (op.token=="/")
+			return std::make_unique<ast::Expr_div>(std::move(op1), std::move(op2));
+		else if (op.token=="<")
+			return std::make_unique<ast::Expr_lt>(std::move(op1), std::move(op2));
+		else if (op.token==">")
+			return std::make_unique<ast::Expr_gt>(std::move(op1), std::move(op2));
+		else if (op.token==">=")
+			return std::make_unique<ast::Expr_gte>(std::move(op1), std::move(op2));
+		else if (op.token=="<=")
+			return std::make_unique<ast::Expr_lte>(std::move(op1), std::move(op2));
+		else if (op.token=="==")
+			return std::make_unique<ast::Expr_eq>(std::move(op1), std::move(op2));
+		else
+			throw unexpected_token_type("Cant parse this type of op yet. ("+op.token+")");
+	}
+	throw parsing_exception("Invalid expression.");
 }
+
 
 Program::Program(std::string _sourcecode) : sourcecode(std::move(_sourcecode))
 {
 	Tokenizer tokenizer(sourcecode);
-	Token tok=tokenizer.next();
 
-	expect_token_type(tok, Token::VAR);
-	auto op1=tok;
-	tok=tokenizer.next();
-	expect_token(tok, Token('=',Token::OP));
-	auto op2=parse_expression(tokenizer);
-	
-	ast=std::make_unique<ast::Equal>(op1, std::move(op2));
+	ast=parse_expression(tokenizer, Token::_EOF);
 	
 	_dependencies.push_back("mem.free");
 	_dependencies.push_back("mem.total");

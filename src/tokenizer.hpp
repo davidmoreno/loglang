@@ -40,6 +40,10 @@ namespace loglang{
 			NUMBER=4,
 			OPEN_PAREN=5,
 			CLOSE_PAREN=6,
+			IF=7,
+			EDGE_IF=8,
+			THEN=9,
+			ELSE=10
 		};
 		
 		

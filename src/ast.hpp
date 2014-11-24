@@ -80,5 +80,60 @@ namespace loglang{
 				return std::to_string( to_number(op1->eval(context)) / to_number(op2->eval(context)) );
 			}
 		};
+		class Expr_lt : public Expr{
+		public:
+			Expr_lt(AST op1, AST op2) : Expr(std::move(op1), std::move(op2)) {}
+			std::string eval(LogParser &context){
+				return to_number(op1->eval(context)) < to_number(op2->eval(context)) ? "1" : "0";
+			}
+		};
+		class Expr_lte : public Expr{
+		public:
+			Expr_lte(AST op1, AST op2) : Expr(std::move(op1), std::move(op2)) {}
+			std::string eval(LogParser &context){
+				return to_number(op1->eval(context)) <= to_number(op2->eval(context)) ? "1" : "0";
+			}
+		};
+		class Expr_gt : public Expr{
+		public:
+			Expr_gt(AST op1, AST op2) : Expr(std::move(op1), std::move(op2)) {}
+			std::string eval(LogParser &context){
+				return to_number(op1->eval(context)) > to_number(op2->eval(context)) ? "1" : "0";
+			}
+		};
+		class Expr_gte : public Expr{
+		public:
+			Expr_gte(AST op1, AST op2) : Expr(std::move(op1), std::move(op2)) {}
+			std::string eval(LogParser &context){
+				return to_number(op1->eval(context)) >= to_number(op2->eval(context)) ? "1" : "0";
+			}
+		};
+		class Expr_eq : public Expr{
+		public:
+			Expr_eq(AST op1, AST op2) : Expr(std::move(op1), std::move(op2)) {}
+			std::string eval(LogParser &context){
+				return to_number(op1->eval(context)) == to_number(op2->eval(context)) ? "1" : "0";
+			}
+		};
+		
+		class Edge_if : public Expr{
+		public:
+			AST cond;
+			bool prev_value;
+			
+			Edge_if(AST _cond, AST if_true, AST if_false) : Expr(std::move(if_true), std::move(if_false)) , cond(std::move(_cond)), prev_value(false) {
+			}
+			std::string eval(LogParser &context){
+				bool current=to_number(cond->eval(context));
+				if (current!=prev_value){
+					prev_value=current;
+					if (current)
+						return op1->eval(context);
+					else
+						return op2->eval(context);
+				}
+				return "";
+			}
+		};
 	}
 }
