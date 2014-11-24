@@ -17,7 +17,7 @@
 #pragma once
 
 #include <string>
-#include <vector>
+#include <set>
 #include <memory>
 
 namespace loglang{
@@ -45,12 +45,12 @@ namespace loglang{
 	
 	class Program{
 		std::string sourcecode;
-		std::vector<std::string> _dependencies;
+		std::set<std::string> _dependencies;
 		std::shared_ptr<ASTBase> ast;
 		
 	public:
 		Program(std::string sourcecode);
-		const std::vector<std::string> &dependencies() const { return _dependencies; }
+		const std::set<std::string> &dependencies() const { return _dependencies; }
 		
 		void run(LogParser &context);
 	};

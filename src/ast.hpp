@@ -15,9 +15,28 @@
  */
 
 #include <string>
+#include <set>
+#include <algorithm>
 
 #include "logparser.hpp"
 #include "tokenizer.hpp"
+
+namespace std{
+	std::string to_string(const std::set<std::string> &set){
+		std::stringstream ss;
+		bool first=true;
+		ss<<"{";
+		for(auto &s: set){
+			if (!first)
+				ss<<", ";
+			else
+				first=false;
+			ss<<s;
+		}
+		ss<<"}";
+		return ss.str();
+	}
+};
 
 namespace loglang{
 	double to_number(const std::string &str){
@@ -27,6 +46,7 @@ namespace loglang{
 	class ASTBase{
 	public:
 		virtual std::string eval(LogParser &context) = 0;
+		virtual std::set<std::string> dependencies() = 0;
 	};
 	
 	using AST=std::unique_ptr<ASTBase>;
@@ -42,6 +62,9 @@ namespace loglang{
 				context.get_value(op1.token).set(op2_res, context);
 				return op2_res;
 			}
+			std::set< std::string > dependencies(){
+				return op2->dependencies();
+			}
 		};
 		class Value : public ASTBase{
 		public:
@@ -50,12 +73,20 @@ namespace loglang{
 			std::string eval(LogParser &context){
 				return val.token;
 			}
-		};
+			
+			std::set< std::string > dependencies(){
+				return {};
+			}
+			
+			};
 		class Value_var : public Value{
 		public:
 			Value_var(Token _val) : Value(_val) {}
 			std::string eval(LogParser &context){
 				return context.get_value(val.token).get();
+			}
+			std::set<std::string> dependencies(){
+				return { val.token };
 			}
 		};
 		
@@ -64,6 +95,12 @@ namespace loglang{
 			AST op1;
 			AST op2;
 			Expr(AST op1, AST op2) : op1(std::move(op1)), op2(std::move(op2)){}
+			std::set< std::string > dependencies(){
+				auto res=op1->dependencies();
+				for(auto &s: op2->dependencies())
+					res.insert(s);
+				return  res;
+			}
 		};
 		
 		class Expr_mul : public Expr{
@@ -154,6 +191,9 @@ namespace loglang{
 						return op2->eval(context);
 				}
 				return "";
+			}
+			std::set< std::string > dependencies(){
+				return cond->dependencies();
 			}
 		};
 	}

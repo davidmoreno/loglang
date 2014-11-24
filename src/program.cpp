@@ -111,9 +111,8 @@ Program::Program(std::string _sourcecode) : sourcecode(std::move(_sourcecode))
 
 	ast=parse_expression(tokenizer, Token::_EOF);
 	
-	_dependencies.push_back("mem.free");
-	_dependencies.push_back("mem.total");
-	
+	_dependencies=ast->dependencies();
+// 	std::cerr<<"deps "<<std::to_string(_dependencies)<<std::endl;
 // 	std::cerr<<"Compile: "<<_sourcecode<<std::endl;
 }
 
