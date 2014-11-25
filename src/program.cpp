@@ -41,16 +41,44 @@ using namespace loglang;
 // }
 
 
-static AST parse_expression(Tokenizer &tokenizer, Token::type_t end);
+static AST parse_expression(Tokenizer &tokenizer, Token::type_t end, Token::type_t end2=Token::INVALID);
 
-static AST parse_edge_if(Tokenizer &tokenizer, Token::type_t end){
+static AST parse_edge_if(Tokenizer &tokenizer, Token::type_t end, Token::type_t end2){
 	AST cond=parse_expression(tokenizer, Token::THEN);
 	AST if_true=parse_expression(tokenizer, Token::ELSE);
-	AST if_false=parse_expression(tokenizer, end);
+	AST if_false=parse_expression(tokenizer, end, end2);
 	return std::make_unique<ast::Edge_if>(std::move(cond), std::move(if_true), std::move(if_false));
 }
 
-static AST parse_expression(Tokenizer &tokenizer, Token::type_t end){
+static AST parse_at(Tokenizer &tokenizer, Token::type_t end, Token::type_t end2){
+	AST cond=parse_expression(tokenizer, Token::DO);
+	AST _do=parse_expression(tokenizer, end, end2);
+	return std::make_unique<ast::At>(std::move(cond), std::move(_do));
+}
+
+static AST parse_function_call(Token fname, Tokenizer &tokenizer){
+	auto tok=tokenizer.next();
+	auto list=std::make_unique<ast::List>();
+	if (tok.type==Token::CLOSE_PAREN)
+		return std::move(list);
+	tokenizer.rewind(); // Not good, but necessary
+	while(true){
+		list->list.push_back( parse_expression(tokenizer, Token::COMMA, Token::CLOSE_PAREN) );
+		tokenizer.rewind();
+		tok=tokenizer.next();
+		
+		if (tok.type==Token::CLOSE_PAREN){
+			return std::move(list);
+		}
+		else if (tok.type!=Token::COMMA){
+			throw parsing_exception(tokenizer.position_to_string() + "; " + std::to_string(tok) + " Invalid function call.");
+		}
+	}
+	throw parsing_exception(tokenizer.position_to_string() + "; Code must never get here");
+}
+
+static AST parse_expression(Tokenizer &tokenizer, Token::type_t end, Token::type_t end2){
+// 	std::cerr<<" expr "<<tokenizer.position_to_string()<< end <<" " <<end2<<std::endl;
 	auto tok=tokenizer.next();
 	AST op1;
 	if (tok.type==Token::OPEN_PAREN)
@@ -60,24 +88,42 @@ static AST parse_expression(Tokenizer &tokenizer, Token::type_t end){
 	else if (tok.type==Token::VAR)
 		op1=std::make_unique<ast::Value_var>(tok);
 	else if (tok.type==Token::EDGE_IF)
-		return parse_edge_if(tokenizer, end);
+		return parse_edge_if(tokenizer, end, end2);
+	else if (tok.type==Token::AT)
+		return parse_at(tokenizer, end, end2);
+	else if (tok.type==Token::OP && tok.token=="*"){ // In place conversion, its really a glob arg.
+		tok.type=Token::VAR;
+		op1=std::make_unique<ast::Value>(tok);
+	}
 	else{
 		std::stringstream s;
 		s<<tokenizer.position_to_string();
-		s<<"; Got "<<std::to_string(tok)<<" expected expression";
+		s<<"; Got "<<std::to_string(tok)<<" expected expression.";
 		throw unexpected_token_type(s.str());
 	}
 	auto op=tokenizer.next();
-	if (op.type==end)
+// 	std::cerr<<" op "<<op.token<<" "<<tokenizer.position_to_string()<< end <<" " <<end2<<std::endl;
+	if (op.type==Token::OPEN_PAREN){ // If function call set as op1, and get again op
+		ASTBase *op1p=&*op1;
+		auto var=dynamic_cast<ast::Value_var*>(op1p);
+		if (var==nullptr){
+			throw semantic_exception(tokenizer.position_to_string() + "; lvalue invalid. Only function names are allowed.");
+		}
+		op1 = parse_function_call(std::move(var->val), tokenizer);
+		op=tokenizer.next();
+	}
+	if (op.type==end || op.type==end2)
 		return op1;
-	AST op2=parse_expression(tokenizer, end);
+
+	
+	AST op2=parse_expression(tokenizer, end, end2);
 	
 	if (op.type==Token::OP){
 		if (op.token=="="){
 			ASTBase *op1p=&*op1;
 			auto var=dynamic_cast<ast::Value_var*>(op1p);
 			if (var==nullptr){
-				throw semantic_exception(tokenizer.position_to_string() + "; lvalue invalid. Only varaibles are allowed.");
+				throw semantic_exception(tokenizer.position_to_string() + "; lvalue invalid. Only variables are allowed.");
 			}
 			return std::make_unique<ast::Equal>(std::move(var->val), std::move(op2));
 		}

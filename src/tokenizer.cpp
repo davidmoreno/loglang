@@ -17,6 +17,8 @@
 #include <iostream>
 #include <algorithm>
 #include <set>
+#include <stdexcept>
+
 #include "tokenizer.hpp"
 
 using namespace loglang;
@@ -27,7 +29,7 @@ static std::string ops2letter_1="><=!";
 
 static std::set<std::string> extraops{"<=",">=","and","or","=="};
 static std::string number="0123456789.";
-static std::string var_extra_letters="_-%.";
+static std::string var_extra_letters="_-%.*?";
 
 Token Tokenizer::real_next()
 {
@@ -42,10 +44,14 @@ Token Tokenizer::real_next()
 		type=Token::STRING;
 	else if (std::isalpha(*pos))
 		type=Token::VAR;
+	else if (*pos=='%')
+		return Token(*pos++,Token::VAR);
 	else if (std::isdigit(*pos))
 		type=Token::NUMBER;
 	else if (*pos=='(') // For unichar tokens, return.
 		return Token(*pos++, Token::OPEN_PAREN);
+	else if (*pos==',') 
+		return Token(*pos++, Token::COMMA);
 	else if (*pos==')')
 		return Token(*pos++, Token::CLOSE_PAREN);
 	else if (std::find(std::begin(ops), std::end(ops), *pos)!=std::end(ops)){
@@ -87,6 +93,10 @@ Token Tokenizer::real_next()
 			type=Token::ELSE;
 		if (str=="edge_if")
 			type=Token::EDGE_IF;
+		if (str=="at")
+			type=Token::AT;
+		if (str=="do")
+			type=Token::DO;
 		if (std::find(std::begin(extraops), std::end(extraops), str)!=std::end(extraops))
 			type=Token::OP;
 	}
@@ -98,8 +108,18 @@ Token Tokenizer::real_next()
 
 Token Tokenizer::next()
 {
+	if (_rewind){
+		_rewind=false;
+		return last_token;
+	}
 	last_token = real_next();
 	return last_token;
+}
+
+void Tokenizer::rewind(){
+	if (_rewind)
+		throw std::runtime_error("Tokenizer, trying to rewind twice.");
+	_rewind=true;
 }
 
 

@@ -32,7 +32,7 @@ namespace loglang{
 	
 	class Token{
 	public:
-		enum type_t{
+		enum type_t{ // Numebrs dont really matter but for debugging its nice to have a list with token_t and number
 			_EOF=0,
 			VAR=1,
 			OP=2,
@@ -43,7 +43,12 @@ namespace loglang{
 			IF=7,
 			EDGE_IF=8,
 			THEN=9,
-			ELSE=10
+			ELSE=10,
+			AT=11,
+			DO=12,
+			COMMA=13,
+			
+			INVALID=255
 		};
 		
 		
@@ -70,12 +75,14 @@ namespace loglang{
 		std::string data;
 		std::string::iterator pos;
 		Token last_token;
+		bool _rewind=false;
 	private:
 		Token real_next();
 	public:
 		Tokenizer(std::string str) : data(std::move(str)), pos(std::begin(data)){}
 		
 		Token next();
+		void rewind();
 		
 		std::string position_to_string();
 	};

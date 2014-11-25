@@ -196,5 +196,38 @@ namespace loglang{
 				return cond->dependencies();
 			}
 		};
+		class At : public Expr{
+		public:
+			std::string prev_value;
+			
+			At(AST _cond, AST _do) : Expr(std::move(_cond), std::move(_do)) {
+			}
+			std::string eval(LogParser &context){
+				std::string current=op1->eval(context);
+				if (current!=prev_value){
+					prev_value=current;
+					return op2->eval(context);
+				}
+				return "";
+			}
+			std::set< std::string > dependencies(){
+				return op1->dependencies();
+			}
+		};
+		class List : public ASTBase{
+		public:
+			std::vector<AST> list;
+			std::string eval(LogParser& context){
+				throw std::runtime_error("Lists are never called");
+			}
+			std::set< std::string > dependencies(){
+				auto res=std::set< std::string >();
+				for(auto &el: list){
+					for(auto &s: el->dependencies())
+						res.insert(s);
+				}
+				return  res;
+			}
+		};
 	}
 }
