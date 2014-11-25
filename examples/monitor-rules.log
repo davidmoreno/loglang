@@ -1,2 +1,9 @@
-:mem.free% mem.free% = ( mem.free + mem.cached ) * 100.0 / mem.total
-:cpu.cpu% cpu.cpu% = 100 - ( ( cpu.cpu.nice + cpu.cpu.idle ) * 100.0 / ( cpu.cpu.user + cpu.cpu.nice + cpu.cpu.system + cpu.cpu.idle + cpu.cpu.iowait + cpu.cpu.irq + cpu.cpu.softirq ) )
+:mem.free%  mem.free% = ( mem.free + mem.cached ) * 100.0 / mem.total
+:cpu.cpu%   cpu.cpu% = 100 - ( ( cpu.cpu.nice + cpu.cpu.idle ) * 100.0 / ( sum cpu.cpu.* ) )
+#:dsk.read		at timestamp do { 
+#							disk.read_total_0 = disk.read_total 
+#							disk.read_total = ( sum disk.*.read ) 
+#							disk.read = ( disk.read_total - disk.read_total_0 ) / (timestamp - timestamp_0) ) 
+#						}
+:show-all   at * do print(%)
+# :show-%   at *% do print(%) # show only those which end at %
