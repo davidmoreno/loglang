@@ -45,6 +45,8 @@ std::string DataItem::get()
 
 void DataItem::set(const std::string& str, LogParser &context)
 {
+	if (value==str) // Ignore no changes.
+		return; 
 	value=str;
 	context.output(name, value);
 	for(auto program: at_modify)

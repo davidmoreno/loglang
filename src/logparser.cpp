@@ -36,6 +36,12 @@ void LogParser::feed(const std::string& _data)
 	std::string data=_data;
 	if (data.length()==0)
 		return;
+	{
+		auto comment=std::find(std::begin(data), std::end(data), '#');
+		if (comment!=std::end(data)){ // Remove comments
+			data.erase(comment, std::end(data));
+		}
+	}
 	if (std::isspace(data[0]))
 		boost::algorithm::trim(data);
 	if (data.length()==0)
@@ -53,7 +59,14 @@ void LogParser::feed(const std::string& _data)
 		}
 		else{
 			auto value=data.substr(colonpos+1);
-			auto prog=std::make_shared<Program>(std::move(value));
+			std::shared_ptr<Program> prog;
+			try{
+				prog=std::make_shared<Program>(std::move(value));
+			}
+			catch(std::exception &excp){
+				std::cerr<<"Error compiling: "<<excp.what()<<std::endl;
+				return;
+			}
 			
 			programs[key]=prog;
 			for (auto &dep: prog->dependencies()){

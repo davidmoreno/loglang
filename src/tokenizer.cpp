@@ -29,7 +29,7 @@ static std::set<std::string> extraops{"<=",">=","and","or","=="};
 static std::string number="0123456789.";
 static std::string var_extra_letters="_-%.";
 
-Token RealTokenizer::next()
+Token Tokenizer::real_next()
 {
 	auto data_end=std::end(data);
 	while (std::isspace(*pos) && pos<data_end) ++pos; // Skip spaces
@@ -61,7 +61,7 @@ Token RealTokenizer::next()
 		return tok;
 	}
 	else
-		throw unexpected_char(*pos);
+		throw unexpected_char(position_to_string(), *pos);
 	auto start=pos;
 	++pos;
 	
@@ -96,8 +96,20 @@ Token RealTokenizer::next()
 	return Token(std::move(str), type);
 }
 
+Token Tokenizer::next()
+{
+	last_token = real_next();
+	return last_token;
+}
+
+
+std::string Tokenizer::position_to_string(){
+	return std::string(std::begin(data), pos-last_token.token.length()) + "\033[01;31m"+last_token.token+"\033[0m" + std::string(pos, std::end(data));
+}
+
 std::string std::to_string(const Token& t){
 	std::stringstream s;
 	s<<"<Token '"<<t.token<<"', type "<<t.type<<">";
 	return s.str();
 }
+

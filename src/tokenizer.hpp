@@ -23,7 +23,7 @@ namespace loglang{
 	class unexpected_char : public std::exception{
 		std::string str;
 	public:
-		unexpected_char(char _c){ str=std::string("Unexpected char "); str.append(std::string(&_c,1)); }
+		unexpected_char(const std::string &error_context, char _c){ str=error_context+std::string("Unexpected char "); str.append(std::string(&_c,1)); }
 		const char *what() const throw(){
 			return str.c_str();
 		}
@@ -66,28 +66,19 @@ namespace loglang{
 		}
 	};
 	
-	class RealTokenizer{
+	class Tokenizer{
 		std::string data;
 		std::string::iterator pos;
+		Token last_token;
+	private:
+		Token real_next();
 	public:
-		RealTokenizer(std::string str) : data(std::move(str)), pos(std::begin(data)){}
+		Tokenizer(std::string str) : data(std::move(str)), pos(std::begin(data)){}
 		
 		Token next();
+		
+		std::string position_to_string();
 	};
-#ifdef __DEBUG__
-	class Tokenizer{
-		RealTokenizer real_tokenizer;
-	public:
-		Tokenizer(std::string str) : real_tokenizer(std::move(str)){}
-		Token next(){
-			Token tk=real_tokenizer.next();
-			std::cerr<<tk.token<<std::endl;
-			return tk;
-		}
-	};
-#else
-	using Tokenizer=RealTokenizer;
-#endif
 }
 
 namespace std{

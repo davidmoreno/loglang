@@ -23,20 +23,22 @@
 
 using namespace loglang;
 
-static void expect_token(const Token &got, const Token &expect){
-	if (got!=expect){
-		std::stringstream s;
-		s<<"Got "<<std::to_string(got)<<" expected token "<<std::to_string(expect);
-		throw unexpected_token(s.str());
-	}
-}
-static void expect_token_type(const Token &got, const Token::type_t expect){
-	if (got.type!=expect){
-		std::stringstream s;
-		s<<"Got "<<std::to_string(got)<<" expected token type "<<std::to_string(expect);
-		throw unexpected_token_type(s.str());
-	}
-}
+// static void expect_token(const Token &got, const Token &expect, Tokenizer &tokenizer){
+// 	if (got!=expect){
+// 		std::stringstream s;
+// 		s<<tokenizer.position_to_string();
+// 		s<<"Got "<<std::to_string(got)<<" expected token "<<std::to_string(expect);
+// 		throw unexpected_token(s.str());
+// 	}
+// }
+// static void expect_token_type(const Token &got, const Token::type_t expect, Tokenizer &tokenizer){
+// 	if (got.type!=expect){
+// 		std::stringstream s;
+// 		s<<tokenizer.position_to_string();
+// 		s<<"Got "<<std::to_string(got)<<" expected token type "<<std::to_string(expect);
+// 		throw unexpected_token_type(s.str());
+// 	}
+// }
 
 
 static AST parse_expression(Tokenizer &tokenizer, Token::type_t end);
@@ -61,7 +63,8 @@ static AST parse_expression(Tokenizer &tokenizer, Token::type_t end){
 		return parse_edge_if(tokenizer, end);
 	else{
 		std::stringstream s;
-		s<<"Got "<<std::to_string(tok)<<" expected expression";
+		s<<tokenizer.position_to_string();
+		s<<"; Got "<<std::to_string(tok)<<" expected expression";
 		throw unexpected_token_type(s.str());
 	}
 	auto op=tokenizer.next();
@@ -74,7 +77,7 @@ static AST parse_expression(Tokenizer &tokenizer, Token::type_t end){
 			ASTBase *op1p=&*op1;
 			auto var=dynamic_cast<ast::Value_var*>(op1p);
 			if (var==nullptr){
-				throw semantic_exception("lvalue invalid. Only varaibles are allowed.");
+				throw semantic_exception(tokenizer.position_to_string() + "; lvalue invalid. Only varaibles are allowed.");
 			}
 			return std::make_unique<ast::Equal>(std::move(var->val), std::move(op2));
 		}
@@ -99,9 +102,9 @@ static AST parse_expression(Tokenizer &tokenizer, Token::type_t end){
 		else if (op.token=="-")
 			return std::make_unique<ast::Expr_sub>(std::move(op1), std::move(op2));
 		else
-			throw unexpected_token_type("Cant parse this type of op yet. ("+op.token+")");
+			throw unexpected_token_type(tokenizer.position_to_string() + "; Cant parse this type of op yet. ("+op.token+")");
 	}
-	throw parsing_exception("Invalid expression.");
+	throw parsing_exception(tokenizer.position_to_string() + "; Invalid expression.");
 }
 
 
