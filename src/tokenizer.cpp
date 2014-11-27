@@ -42,7 +42,7 @@ Token Tokenizer::real_next()
 	Token::type_t type=Token::_EOF;
 	if (*pos=='"') // For multichar tokens, set type.
 		type=Token::STRING;
-	else if (std::isalpha(*pos))
+	else if (std::isalpha(*pos) || *pos=='_')
 		type=Token::VAR;
 	else if (*pos=='%')
 		return Token(*pos++,Token::VAR);
@@ -75,7 +75,7 @@ Token Tokenizer::real_next()
 	// For multi char tokens, continue parsing.
 	if (type==Token::STRING){
 		while (*pos!='"' && pos<data_end) ++pos;
-		str=std::string(start, pos-1);
+		str=std::string(start+1, pos);
 		++pos;
 	}
 	else if (type==Token::NUMBER){
@@ -124,7 +124,7 @@ void Tokenizer::rewind(){
 
 
 std::string Tokenizer::position_to_string(){
-	return std::string(std::begin(data), pos-last_token.token.length()) + "\033[01;31m"+last_token.token+"\033[0m" + std::string(pos, std::end(data));
+	return std::string(std::begin(data), pos-(last_token.token.length()+1)) + "\033[01;31m"+last_token.token+"\033[0m" + std::string(pos, std::end(data));
 }
 
 std::string std::to_string(const Token& t){

@@ -1,9 +1,30 @@
-:mem.free%  mem.free% = ( mem.free + mem.cached ) * 100.0 / mem.total
-:cpu.cpu%   cpu.cpu% = 100 - ( ( cpu.cpu.nice + cpu.cpu.idle ) * 100.0 / sum( cpu.cpu.* ) )
-#:dsk.read		at timestamp do { 
-#							disk.read_total_0 = disk.read_total 
-#							disk.read_total = ( sum disk.*.read ) 
-#							disk.read = ( disk.read_total - disk.read_total_0 ) / (timestamp - timestamp_0) ) 
-#						}
-:show-all   at * do print(%)
+# some initial values, to prevent non defined errors
+cpu.cpu.idle 0
+cpu.cpu.nice 0
+mem.free 0
+mem.cached 0
+mem.total 0
+
+# mem to %
+:mem.free%  at mem.free do easy.mem.free% = round( ( mem.free + mem.cached ) * 100.0 / mem.total , 2 )
+
+# cpu is more complex, need jiffies diference from last. Order is important.
+:_.cpu.sum_d  at timestamp do _cpu.sum_d  = sum( cpu.cpu.* ) - _cpu.sum 
+:_.cpu.sum    at timestamp do _cpu.sum    = sum( cpu.cpu.* )
+:_.cpu.user_d at timestamp do _cpu.user_d = ( cpu.cpu.nice + cpu.cpu.idle ) - _.cpu.user
+:_.cpu.user   at timestamp do _.cpu.user  = ( cpu.cpu.nice + cpu.cpu.idle )
+
+:cpu.cpu%   at timestamp do easy.cpu.cpu% = round( 100.0 - ( ( _cpu.user_d * 100.0 ) / _cpu.sum_d ) , 3 )
+
+# 512 is sector size as reported.
+:disk.read_d   at disk.sda.read do easy.disk.read    = (( sum( disk.?d?.read ) - _disk.read ) * 512.0 )
+:disk.read     at disk.sda.read do _disk.read        = sum( disk.?d?.read )
+:disk.write_d  at disk.sda.write do easy.disk.write  = (( sum( disk.?d?.write ) - _disk.write ) * 512.0 )
+:disk.write    at disk.sda.write do _disk.write      = sum( disk.?d?.write )
+
+
+:show-all   at easy.disk.* do print(%)
 # :show-%   at *% do print(%) # show only those which end at %
+# :show-mem   at mem.free% do print("mem.free%")
+# :show-cpu   at cpu.cpu% do print("cpu.cpu%")
+# :show-cpu   at _cpu.* do print(%)

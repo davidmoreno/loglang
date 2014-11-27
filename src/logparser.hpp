@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#pragma once
 
 #include <string>
 #include <functional>
@@ -25,6 +26,7 @@ namespace loglang{
 	class LogParser{
 		std::function<void (const std::string &output)> _output;
 		std::unordered_map<std::string, DataItem> datastore;
+		std::unordered_map<std::string, std::shared_ptr<Program>> datastore_glob;
 		std::unordered_map<std::string, std::shared_ptr<Program>> programs;
 	public:
 		LogParser();
@@ -33,6 +35,11 @@ namespace loglang{
 		void output(const std::string &str){ _output(str); }
 		void output(const std::string &str, const std::string &str2);
 		DataItem &get_value(const std::string &key);
+		
+		/// Returns the resolved glob values. 
+		any get_glob_values(const std::string &glob);
+		
+		any fn(const std::string &fname, const std::vector<any> &args);
 		
 		void debug_values();
 	};

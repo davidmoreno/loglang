@@ -38,17 +38,20 @@ void DataItem::remove_program(std::shared_ptr< Program > _at_modify)
 	at_modify.erase( std::remove(std::begin(at_modify), std::end(at_modify), _at_modify), std::end(at_modify));
 }
 
-std::string DataItem::get()
+const loglang::any &DataItem::get() const
 {
-	return value;
+	return val;
 }
 
-void DataItem::set(const std::string& str, LogParser &context)
+void DataItem::set(any new_val, LogParser &context)
 {
-	if (value==str) // Ignore no changes.
+	if (val==new_val) // Ignore no changes.
 		return; 
-	value=str;
-	context.output(name, value);
+	val=std::move(new_val);
+// 	context.output(name, value);
+	if (name=="%") // Prevent recursion.
+		return;
+	context.get_value("%").set(to_any(name), context);
 	for(auto program: at_modify)
 		program->run(context);
 }

@@ -58,17 +58,17 @@ static AST parse_at(Tokenizer &tokenizer, Token::type_t end, Token::type_t end2)
 
 static AST parse_function_call(Token fname, Tokenizer &tokenizer){
 	auto tok=tokenizer.next();
-	auto list=std::make_unique<ast::List>();
+	auto fn=std::make_unique<ast::Function>(fname.token);
 	if (tok.type==Token::CLOSE_PAREN)
-		return std::move(list);
+		return std::move(fn);
 	tokenizer.rewind(); // Not good, but necessary
 	while(true){
-		list->list.push_back( parse_expression(tokenizer, Token::COMMA, Token::CLOSE_PAREN) );
+		fn->params.push_back( parse_expression(tokenizer, Token::COMMA, Token::CLOSE_PAREN) );
 		tokenizer.rewind();
 		tok=tokenizer.next();
 		
 		if (tok.type==Token::CLOSE_PAREN){
-			return std::move(list);
+			return std::move(fn);
 		}
 		else if (tok.type!=Token::COMMA){
 			throw parsing_exception(tokenizer.position_to_string() + "; " + std::to_string(tok) + " Invalid function call.");
@@ -85,15 +85,19 @@ static AST parse_expression(Tokenizer &tokenizer, Token::type_t end, Token::type
 		op1=parse_expression(tokenizer, Token::CLOSE_PAREN);
 	else if (tok.type==Token::NUMBER || tok.type==Token::STRING)
 		op1=std::make_unique<ast::Value>(tok);
-	else if (tok.type==Token::VAR)
-		op1=std::make_unique<ast::Value_var>(tok);
+	else if (tok.type==Token::VAR){
+		if (std::find(std::begin(tok.token), std::end(tok.token), '*')==std::end(tok.token) && std::find(std::begin(tok.token), std::end(tok.token), '?')==std::end(tok.token))
+			op1=std::make_unique<ast::Value_var>(tok);
+		else
+			op1=std::make_unique<ast::Value_glob>(tok);
+	}
 	else if (tok.type==Token::EDGE_IF)
 		return parse_edge_if(tokenizer, end, end2);
 	else if (tok.type==Token::AT)
 		return parse_at(tokenizer, end, end2);
 	else if (tok.type==Token::OP && tok.token=="*"){ // In place conversion, its really a glob arg.
 		tok.type=Token::VAR;
-		op1=std::make_unique<ast::Value>(tok);
+		op1=std::make_unique<ast::Value_glob>(tok);
 	}
 	else{
 		std::stringstream s;
@@ -154,22 +158,28 @@ static AST parse_expression(Tokenizer &tokenizer, Token::type_t end, Token::type
 }
 
 
-Program::Program(std::string _sourcecode) : sourcecode(std::move(_sourcecode))
+Program::Program(std::string _name, std::string _sourcecode) : name(std::move(_name)), sourcecode(std::move(_sourcecode))
 {
 	Tokenizer tokenizer(sourcecode);
 
 	ast=parse_expression(tokenizer, Token::_EOF);
 	
 	_dependencies=ast->dependencies();
+// 	std::cerr<<name<<std::endl;
 // 	std::cerr<<"deps "<<std::to_string(_dependencies)<<std::endl;
 // 	std::cerr<<"Compile: "<<_sourcecode<<std::endl;
 }
 
 void Program::run(LogParser& context)
 {
-// 	std::cerr<<"Run"<<std::endl;
+// 	std::cerr<<"Run "<<name<<std::endl;
 	if (ast){
-		auto output=ast->eval(context);
+		try{
+			auto output=ast->eval(context);
+		}
+		catch(const std::exception &e){
+			std::cerr<<"ERROR running "<< name <<": "<<e.what()<<std::endl;
+		}
 // 		context.output(output);
 	}
 }

@@ -16,26 +16,35 @@
 
 #pragma once
 
+#include <set>
 #include <string>
-#include <vector>
-#include <memory>
+#include <sstream>
 
-#include "program.hpp"
-#include "value.hpp"
+namespace std{
+	template<typename T=std::string>
+	std::string to_string(std::string s){
+		return s;
+	}
+	
+	template<typename T>
+	std::string to_string(const T &set){
+		std::stringstream ss;
+		bool first=true;
+		ss<<"{";
+		for(auto &s: set){
+			if (!first)
+				ss<<", ";
+			else
+				first=false;
+			ss<<std::to_string(s);
+		}
+		ss<<"}";
+		return ss.str();
+	}
+};
+
 
 namespace loglang{
-	class LogParser;
-	
-	class DataItem{
-		std::vector<std::shared_ptr<Program>> at_modify;
-		loglang::any val;
-		std::string name;
-	public:
-		DataItem(std::string _name);
-		void run_at_modify(std::shared_ptr<Program> at_modify);
-		void remove_program(std::shared_ptr<Program> at_modify);
-		
-		void set(any str, LogParser &context);
-		const loglang::any &get() const;
-	};
-}
+	void print_backtrace();
+	double to_number(const std::string &str);
+};

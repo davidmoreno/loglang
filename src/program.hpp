@@ -44,12 +44,13 @@ namespace loglang{
 	class ASTBase;
 	
 	class Program{
+		std::string name;
 		std::string sourcecode;
 		std::set<std::string> _dependencies;
 		std::shared_ptr<ASTBase> ast;
 		
 	public:
-		Program(std::string sourcecode);
+		Program(std::string name, std::string sourcecode);
 		const std::set<std::string> &dependencies() const { return _dependencies; }
 		
 		void run(LogParser &context);

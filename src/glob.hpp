@@ -14,28 +14,17 @@
  * limitations under the License.
  */
 
-#pragma once
-
 #include <string>
 #include <vector>
-#include <memory>
-
-#include "program.hpp"
-#include "value.hpp"
 
 namespace loglang{
-	class LogParser;
-	
-	class DataItem{
-		std::vector<std::shared_ptr<Program>> at_modify;
-		loglang::any val;
-		std::string name;
-	public:
-		DataItem(std::string _name);
-		void run_at_modify(std::shared_ptr<Program> at_modify);
-		void remove_program(std::shared_ptr<Program> at_modify);
-		
-		void set(any str, LogParser &context);
-		const loglang::any &get() const;
-	};
-}
+	bool glob_match(const std::string &text, const std::string &glob);
+// 	template<typename T>
+// 	std::vector<std::string> glob_filter(T I, T endI, std::string &glob){
+// 		std::vector<std::string> ret;
+// 		for(;I!=endI;++I)
+// 			if (glob_match(*I, glob))
+// 				ret.push_back(*I);
+// 		return ret;
+// 	}
+};
