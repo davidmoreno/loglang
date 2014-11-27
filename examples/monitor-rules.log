@@ -23,7 +23,7 @@ mem.total 0
 :disk.write    at disk.sda.write do _disk.write      = sum( disk.?d?.write )
 
 
-:show-all   at easy.disk.* do print(%)
+:show-all   at easy.* do print(%)
 # :show-%   at *% do print(%) # show only those which end at %
 # :show-mem   at mem.free% do print("mem.free%")
 # :show-cpu   at cpu.cpu% do print("cpu.cpu%")
