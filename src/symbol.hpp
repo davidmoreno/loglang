@@ -17,18 +17,27 @@
 #pragma once
 
 #include <string>
-#include <set>
+#include <vector>
+#include <memory>
+#include <string>
 
 #include "value.hpp"
 
 namespace loglang{
+	class Program;
 	class Context;
-	class ASTBase{
-	public:
-		virtual any eval(Context &context) = 0;
-		virtual std::string to_string() = 0;
-		virtual std::set<std::string> dependencies() = 0;
-	};
 	
-	using AST=std::unique_ptr<ASTBase>;
+	class Symbol{
+		std::vector<std::shared_ptr<Program>> at_modify;
+		loglang::any val;
+		std::string _name;
+	public:
+		Symbol(std::string name);
+		void run_at_modify(std::shared_ptr<Program> at_modify);
+		void remove_program(std::shared_ptr<Program> at_modify);
+		
+		const std::string &name(){ return _name; }
+		void set(any str, Context &context);
+		const loglang::any &get() const;
+	};
 }

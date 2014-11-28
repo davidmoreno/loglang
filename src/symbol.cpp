@@ -16,43 +16,42 @@
 
 #include <algorithm>
 
-#include "dataitem.hpp"
+#include "symbol.hpp"
 #include "program.hpp"
-#include "logparser.hpp"
+#include "context.hpp"
 
 using namespace loglang;
 
-DataItem::DataItem(std::string _name) : name(std::move(_name))
+Symbol::Symbol(std::string name) : _name(std::move(name))
 {
 
 }
 
 
-void DataItem::run_at_modify(std::shared_ptr< Program > _at_modify)
+void Symbol::run_at_modify(std::shared_ptr< Program > _at_modify)
 {
 	at_modify.push_back(_at_modify);
 }
 
-void DataItem::remove_program(std::shared_ptr< Program > _at_modify)
+void Symbol::remove_program(std::shared_ptr< Program > _at_modify)
 {
 	at_modify.erase( std::remove(std::begin(at_modify), std::end(at_modify), _at_modify), std::end(at_modify));
 }
 
-const loglang::any &DataItem::get() const
+const loglang::any &Symbol::get() const
 {
 	return val;
 }
 
-void DataItem::set(any new_val, LogParser &context)
+void Symbol::set(any new_val, Context &context)
 {
 	if (val==new_val) // Ignore no changes.
 		return; 
 	val=std::move(new_val);
 // 	context.output(name, value);
-	if (name=="%") // Prevent recursion.
+	if (_name=="%") // Prevent recursion.
 		return;
-	context.get_value("%").set(to_any(name), context);
+	context.get_value("%").set(to_any(_name), context);
 	for(auto program: at_modify)
 		program->run(context);
 }
-

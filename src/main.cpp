@@ -16,7 +16,7 @@
 
 #include <iostream>
 #include <fstream>
-#include "logparser.hpp"
+#include "context.hpp"
 
 int main(int argc, char **argv){
 	auto &input=std::cin;
@@ -24,7 +24,7 @@ int main(int argc, char **argv){
 	std::cout.sync_with_stdio(false);
 	
 	std::string line;
-	loglang::LogParser parser;
+	loglang::Context context;
 // 	parser.set_output([](const std::string &output){ std::cout<<">> "<<output<<std::endl; });
 	
 	for(int i=1;i<argc;i++){
@@ -35,7 +35,7 @@ int main(int argc, char **argv){
 		while(!fin.eof()){
 			std::getline(fin, line);
 			
-			parser.feed(line);
+			context.feed(line);
 		}
 		fin.close();
 	}
@@ -43,10 +43,10 @@ int main(int argc, char **argv){
 	while(!input.eof()){
 		std::getline(input, line);
 		
-		parser.feed(line);
+		context.feed(line);
 	}
 	std::cerr<<"---"<<std::endl;
-	parser.debug_values();
+	context.debug_values();
 	
 	return 0;
 }

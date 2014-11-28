@@ -18,26 +18,28 @@
 #include <string>
 #include <functional>
 #include <unordered_map>
+#include <map>
 
-#include "dataitem.hpp"
+#include "symbol.hpp"
 #include "program.hpp"
 
 namespace loglang{
-	class LogParser{
+	class Context{
 		std::function<void (const std::string &output)> _output;
-		std::unordered_map<std::string, DataItem> datastore;
-		std::unordered_map<std::string, std::shared_ptr<Program>> datastore_glob;
+		std::unordered_map<std::string, Symbol> symboltable;
+		std::unordered_map<std::string, std::shared_ptr<Program>> glob_dependencies_programs;
 		std::unordered_map<std::string, std::shared_ptr<Program>> programs;
 	public:
-		LogParser();
+		Context();
 		void feed(const std::string &data);
 		void set_output(std::function<void (const std::string &output)> &&);
 		void output(const std::string &str){ _output(str); }
 		void output(const std::string &str, const std::string &str2);
-		DataItem &get_value(const std::string &key);
+		Symbol &get_value(const std::string &key);
 		
 		/// Returns the resolved glob values. 
 		any get_glob_values(const std::string &glob);
+		std::vector<Symbol*> symboltable_filter(const std::string &glob);
 		
 		any fn(const std::string &fname, const std::vector<any> &args);
 		

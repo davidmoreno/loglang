@@ -40,7 +40,7 @@ namespace loglang{
 		semantic_exception(std::string s) : parsing_exception(s){};
 	};
 	
-	class LogParser;
+	class Context;
 	class ASTBase;
 	
 	class Program{
@@ -53,6 +53,6 @@ namespace loglang{
 		Program(std::string name, std::string sourcecode);
 		const std::set<std::string> &dependencies() const { return _dependencies; }
 		
-		void run(LogParser &context);
+		void run(Context &context);
 	};
 }

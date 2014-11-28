@@ -19,21 +19,21 @@
 #include <string>
 #include <boost/algorithm/string.hpp>
 
-#include "logparser.hpp"
+#include "context.hpp"
 #include "program.hpp"
 #include "glob.hpp"
 #include "utils.hpp"
 
 using namespace loglang;
 
-LogParser::LogParser()
+Context::Context()
 {
 	_output=[](const std::string &str){
 		std::cout<<str<<std::endl;
 	};
 }
 
-void LogParser::feed(const std::string& _data)
+void Context::feed(const std::string& _data)
 {
 	std::string data=_data;
 	if (data.length()==0)
@@ -57,10 +57,10 @@ void LogParser::feed(const std::string& _data)
 			for (auto &dep: prog->dependencies()){
 				get_value(dep).remove_program(prog);
 				
-				auto I=std::begin(datastore_glob), endI=std::end(datastore_glob);
+				auto I=std::begin(glob_dependencies_programs), endI=std::end(glob_dependencies_programs);
 				for(; I != endI; ) {
 					if (I->second==prog) {
-							datastore_glob.erase(I++);
+							glob_dependencies_programs.erase(I++);
 					} else {
 						++I;
 					}
@@ -83,12 +83,12 @@ void LogParser::feed(const std::string& _data)
 			for (auto &dep: prog->dependencies()){
 				if (std::find(std::begin(dep), std::end(dep), '?')!=std::end(dep) || std::find(std::begin(dep), std::end(dep), '*')!=std::end(dep)){
 //  					std::cerr<<"Glob depend "<<dep<<std::endl;
-					for (auto &key_value: datastore){
+					for (auto &key_value: symboltable){
 						if (glob_match(key_value.first, dep)){
 // 							std::cerr<<"Match!"<<std::endl;
 							get_value(key_value.first).run_at_modify(prog);
 						}
-					datastore_glob[dep]=prog;
+					glob_dependencies_programs[dep]=prog;
 					}
 				}
 				else // No glob
@@ -105,33 +105,33 @@ void LogParser::feed(const std::string& _data)
 }
 
 
-void LogParser::set_output(std::function<void (const std::string &data)> &&output)
+void Context::set_output(std::function<void (const std::string &data)> &&output)
 {
 	_output=output;
 }
 
 
-void LogParser::debug_values()
+void Context::debug_values()
 {
-	for (auto &pair: datastore){
+	for (auto &pair: symboltable){
 		std::cerr<<pair.first<<" = "<<std::to_string(pair.second.get())<<std::endl;
 	}
 }
 
-void LogParser::output(const std::string& str, const std::string& str2)
+void Context::output(const std::string& str, const std::string& str2)
 {
 	output(str+" "+str2);
 }
 
-DataItem& LogParser::get_value(const std::string& key)
+Symbol& Context::get_value(const std::string& key)
 {
-	auto I=datastore.find(key);
-	if (I!=std::end(datastore))
+	auto I=symboltable.find(key);
+	if (I!=std::end(symboltable))
 		return I->second;
-	auto J=datastore.insert(std::make_pair(key,DataItem(key)));
+	auto J=symboltable.insert(std::make_pair(key,Symbol(key)));
 	
 	// Add new dependenies, if matches any old dependency.
-	for(auto &kv: datastore_glob){
+	for(auto &kv: glob_dependencies_programs){
 		if (glob_match(key, kv.first)){
 			J.first->second.run_at_modify(kv.second);
 		}
@@ -140,7 +140,7 @@ DataItem& LogParser::get_value(const std::string& key)
 	return J.first->second;
 }
 
-any LogParser::fn(const std::string& fname, const std::vector<any> &vars){
+any Context::fn(const std::string& fname, const std::vector<any> &vars){
 	if (fname=="sum"){
 		double n=0.0;
 		for(auto &v: vars){
@@ -156,9 +156,11 @@ any LogParser::fn(const std::string& fname, const std::vector<any> &vars){
 		return to_any( n );
 	}
 	else if (fname=="print"){
-		auto &dataitem=get_value(vars[0]->to_string());
-		output(vars[0]->to_string(), std::to_string( dataitem.get() ));
-		return dataitem.get()->clone();
+		auto symlist=symboltable_filter(vars[0]->to_string());
+		for (auto sym: symlist){
+			output(sym->name(), std::to_string( sym->get() ));
+		}
+		return to_any( (int64_t)vars.size() );
 	}
 	else if (fname=="round"){
 // 		std::cerr<<"round"<<std::endl;
@@ -178,10 +180,10 @@ any LogParser::fn(const std::string& fname, const std::vector<any> &vars){
 	throw std::runtime_error("Unknown function <"+fname+"> called.");
 }
 
-any LogParser::get_glob_values(const std::string& glob){
+any Context::get_glob_values(const std::string& glob){
 	std::vector<any> ret;
 	// Add new dependenies, if matches any old dependency.
-	for(auto &kv: datastore){
+	for(auto &kv: symboltable){
 		if (glob_match(kv.first, glob)){
 			auto &val=kv.second.get();
 			if (val)
@@ -191,3 +193,15 @@ any LogParser::get_glob_values(const std::string& glob){
 	return to_any(std::move(ret));
 }
 
+std::vector<Symbol*> Context::symboltable_filter(const std::string &glob){
+	std::vector<Symbol*> ret;
+	for(auto &kv: symboltable){
+		if (glob_match(kv.first, glob)){
+			Symbol *sym=&kv.second;
+			auto &val=sym->get();
+			if (val)
+				ret.push_back(sym);
+		}
+	}
+	return ret;
+}

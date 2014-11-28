@@ -14,28 +14,11 @@
  * limitations under the License.
  */
 
+
 #pragma once
 
-#include <string>
-#include <vector>
-#include <memory>
-
-#include "program.hpp"
-#include "value.hpp"
+#include "ast.hpp"
 
 namespace loglang{
-	class LogParser;
-	
-	class DataItem{
-		std::vector<std::shared_ptr<Program>> at_modify;
-		loglang::any val;
-		std::string name;
-	public:
-		DataItem(std::string _name);
-		void run_at_modify(std::shared_ptr<Program> at_modify);
-		void remove_program(std::shared_ptr<Program> at_modify);
-		
-		void set(any str, LogParser &context);
-		const loglang::any &get() const;
-	};
+	AST parse_program(const std::string sourcecode);
 }

@@ -18,151 +18,14 @@
 #include <sstream>
 
 #include "program.hpp"
-#include "tokenizer.hpp"
-#include "ast.hpp"
+#include "parser.hpp"
 
 using namespace loglang;
-
-// static void expect_token(const Token &got, const Token &expect, Tokenizer &tokenizer){
-// 	if (got!=expect){
-// 		std::stringstream s;
-// 		s<<tokenizer.position_to_string();
-// 		s<<"Got "<<std::to_string(got)<<" expected token "<<std::to_string(expect);
-// 		throw unexpected_token(s.str());
-// 	}
-// }
-// static void expect_token_type(const Token &got, const Token::type_t expect, Tokenizer &tokenizer){
-// 	if (got.type!=expect){
-// 		std::stringstream s;
-// 		s<<tokenizer.position_to_string();
-// 		s<<"Got "<<std::to_string(got)<<" expected token type "<<std::to_string(expect);
-// 		throw unexpected_token_type(s.str());
-// 	}
-// }
-
-
-static AST parse_expression(Tokenizer &tokenizer, Token::type_t end, Token::type_t end2=Token::INVALID);
-
-static AST parse_edge_if(Tokenizer &tokenizer, Token::type_t end, Token::type_t end2){
-	AST cond=parse_expression(tokenizer, Token::THEN);
-	AST if_true=parse_expression(tokenizer, Token::ELSE);
-	AST if_false=parse_expression(tokenizer, end, end2);
-	return std::make_unique<ast::Edge_if>(std::move(cond), std::move(if_true), std::move(if_false));
-}
-
-static AST parse_at(Tokenizer &tokenizer, Token::type_t end, Token::type_t end2){
-	AST cond=parse_expression(tokenizer, Token::DO);
-	AST _do=parse_expression(tokenizer, end, end2);
-	return std::make_unique<ast::At>(std::move(cond), std::move(_do));
-}
-
-static AST parse_function_call(Token fname, Tokenizer &tokenizer){
-	auto tok=tokenizer.next();
-	auto fn=std::make_unique<ast::Function>(fname.token);
-	if (tok.type==Token::CLOSE_PAREN)
-		return std::move(fn);
-	tokenizer.rewind(); // Not good, but necessary
-	while(true){
-		fn->params.push_back( parse_expression(tokenizer, Token::COMMA, Token::CLOSE_PAREN) );
-		tokenizer.rewind();
-		tok=tokenizer.next();
-		
-		if (tok.type==Token::CLOSE_PAREN){
-			return std::move(fn);
-		}
-		else if (tok.type!=Token::COMMA){
-			throw parsing_exception(tokenizer.position_to_string() + "; " + std::to_string(tok) + " Invalid function call.");
-		}
-	}
-	throw parsing_exception(tokenizer.position_to_string() + "; Code must never get here");
-}
-
-static AST parse_expression(Tokenizer &tokenizer, Token::type_t end, Token::type_t end2){
-// 	std::cerr<<" expr "<<tokenizer.position_to_string()<< end <<" " <<end2<<std::endl;
-	auto tok=tokenizer.next();
-	AST op1;
-	if (tok.type==Token::OPEN_PAREN)
-		op1=parse_expression(tokenizer, Token::CLOSE_PAREN);
-	else if (tok.type==Token::NUMBER || tok.type==Token::STRING)
-		op1=std::make_unique<ast::Value>(tok);
-	else if (tok.type==Token::VAR){
-		if (std::find(std::begin(tok.token), std::end(tok.token), '*')==std::end(tok.token) && std::find(std::begin(tok.token), std::end(tok.token), '?')==std::end(tok.token))
-			op1=std::make_unique<ast::Value_var>(tok);
-		else
-			op1=std::make_unique<ast::Value_glob>(tok);
-	}
-	else if (tok.type==Token::EDGE_IF)
-		return parse_edge_if(tokenizer, end, end2);
-	else if (tok.type==Token::AT)
-		return parse_at(tokenizer, end, end2);
-	else if (tok.type==Token::OP && tok.token=="*"){ // In place conversion, its really a glob arg.
-		tok.type=Token::VAR;
-		op1=std::make_unique<ast::Value_glob>(tok);
-	}
-	else{
-		std::stringstream s;
-		s<<tokenizer.position_to_string();
-		s<<"; Got "<<std::to_string(tok)<<" expected expression.";
-		throw unexpected_token_type(s.str());
-	}
-	auto op=tokenizer.next();
-// 	std::cerr<<" op "<<op.token<<" "<<tokenizer.position_to_string()<< end <<" " <<end2<<std::endl;
-	if (op.type==Token::OPEN_PAREN){ // If function call set as op1, and get again op
-		ASTBase *op1p=&*op1;
-		auto var=dynamic_cast<ast::Value_var*>(op1p);
-		if (var==nullptr){
-			throw semantic_exception(tokenizer.position_to_string() + "; lvalue invalid. Only function names are allowed.");
-		}
-		op1 = parse_function_call(std::move(var->val), tokenizer);
-		op=tokenizer.next();
-	}
-	if (op.type==end || op.type==end2)
-		return op1;
-
-	
-	AST op2=parse_expression(tokenizer, end, end2);
-	
-	if (op.type==Token::OP){
-		if (op.token=="="){
-			ASTBase *op1p=&*op1;
-			auto var=dynamic_cast<ast::Value_var*>(op1p);
-			if (var==nullptr){
-				throw semantic_exception(tokenizer.position_to_string() + "; lvalue invalid. Only variables are allowed.");
-			}
-			return std::make_unique<ast::Equal>(std::move(var->val), std::move(op2));
-		}
-		if (op.token=="*")
-			return std::make_unique<ast::Expr_mul>(std::move(op1), std::move(op2));
-		else if (op.token=="/")
-			return std::make_unique<ast::Expr_div>(std::move(op1), std::move(op2));
-		else if (op.token=="<")
-			return std::make_unique<ast::Expr_lt>(std::move(op1), std::move(op2));
-		else if (op.token==">")
-			return std::make_unique<ast::Expr_gt>(std::move(op1), std::move(op2));
-		else if (op.token==">=")
-			return std::make_unique<ast::Expr_gte>(std::move(op1), std::move(op2));
-		else if (op.token=="<=")
-			return std::make_unique<ast::Expr_lte>(std::move(op1), std::move(op2));
-		else if (op.token=="==")
-			return std::make_unique<ast::Expr_eq>(std::move(op1), std::move(op2));
-		else if (op.token=="!=")
-			return std::make_unique<ast::Expr_neq>(std::move(op1), std::move(op2));
-		else if (op.token=="+")
-			return std::make_unique<ast::Expr_add>(std::move(op1), std::move(op2));
-		else if (op.token=="-")
-			return std::make_unique<ast::Expr_sub>(std::move(op1), std::move(op2));
-		else
-			throw unexpected_token_type(tokenizer.position_to_string() + "; Cant parse this type of op yet. ("+op.token+")");
-	}
-	throw parsing_exception(tokenizer.position_to_string() + "; Invalid expression.");
-}
 
 
 Program::Program(std::string _name, std::string _sourcecode) : name(std::move(_name)), sourcecode(std::move(_sourcecode))
 {
-	Tokenizer tokenizer(sourcecode);
-
-	ast=parse_expression(tokenizer, Token::_EOF);
+	ast=parse_program(sourcecode);
 	
 	_dependencies=ast->dependencies();
 // 	std::cerr<<name<<std::endl;
@@ -170,7 +33,7 @@ Program::Program(std::string _name, std::string _sourcecode) : name(std::move(_n
 // 	std::cerr<<"Compile: "<<_sourcecode<<std::endl;
 }
 
-void Program::run(LogParser& context)
+void Program::run(Context& context)
 {
 // 	std::cerr<<"Run "<<name<<std::endl;
 	if (ast){
