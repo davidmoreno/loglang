@@ -28,6 +28,8 @@ namespace loglang{
 	public:
 		class invalid_conversion : public std::exception {};
 	public:
+		virtual ~value_base(){}
+		
 		virtual any clone() const = 0;
 		virtual int cmp(const any &) const = 0;
 		

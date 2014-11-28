@@ -25,6 +25,7 @@ namespace loglang{
 	class Context;
 	class ASTBase{
 	public:
+		virtual ~ASTBase(){}
 		virtual any eval(Context &context) = 0;
 		virtual std::string to_string() = 0;
 		virtual std::set<std::string> dependencies() = 0;

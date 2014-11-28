@@ -117,7 +117,10 @@ void Context::set_output(std::function<void (const std::string &data)> &&output)
 void Context::debug_values()
 {
 	for (auto &pair: symboltable){
-		std::cerr<<pair.first<<" = "<<std::to_string(pair.second.get())<<std::endl;
+		if (pair.second.get())
+			std::cerr<<pair.first<<" = "<<std::to_string(pair.second.get())<<std::endl;
+		else
+			std::cerr<<pair.first<<std::endl;
 	}
 }
 
