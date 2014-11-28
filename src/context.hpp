@@ -16,9 +16,9 @@
 #pragma once
 
 #include <string>
+#include <vector>
 #include <functional>
 #include <unordered_map>
-#include <map>
 
 #include "symbol.hpp"
 #include "program.hpp"
@@ -29,6 +29,7 @@ namespace loglang{
 		std::unordered_map<std::string, Symbol> symboltable;
 		std::unordered_map<std::string, std::shared_ptr<Program>> glob_dependencies_programs;
 		std::unordered_map<std::string, std::shared_ptr<Program>> programs;
+		std::unordered_map<std::string, std::function<any (Context &, const std::vector<any> &)>> functions;
 	public:
 		Context();
 		void feed(const std::string &data);
@@ -41,6 +42,7 @@ namespace loglang{
 		any get_glob_values(const std::string &glob);
 		std::vector<Symbol*> symboltable_filter(const std::string &glob);
 		
+		void register_function(std::string fnname, std::function<any (Context &, const std::vector<any> &)> f);
 		any fn(const std::string &fname, const std::vector<any> &args);
 		
 		void debug_values();

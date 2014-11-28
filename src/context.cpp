@@ -23,6 +23,7 @@
 #include "program.hpp"
 #include "glob.hpp"
 #include "utils.hpp"
+#include "builtins.hpp"
 
 using namespace loglang;
 
@@ -31,6 +32,8 @@ Context::Context()
 	_output=[](const std::string &str){
 		std::cout<<str<<std::endl;
 	};
+	
+	register_builtins(*this);
 }
 
 void Context::feed(const std::string& _data)
@@ -141,43 +144,11 @@ Symbol& Context::get_value(const std::string& key)
 }
 
 any Context::fn(const std::string& fname, const std::vector<any> &vars){
-	if (fname=="sum"){
-		double n=0.0;
-		for(auto &v: vars){
-			try{
-				auto &operands=v->to_list();
-				for (auto &op: operands)
-					n+=op->to_double();
-			}
-			catch(const value_base::invalid_conversion &e){
-				n+=v->to_double();
-			}
-		}
-		return to_any( n );
-	}
-	else if (fname=="print"){
-		auto symlist=symboltable_filter(vars[0]->to_string());
-		for (auto sym: symlist){
-			output(sym->name(), std::to_string( sym->get() ));
-		}
-		return to_any( (int64_t)vars.size() );
-	}
-	else if (fname=="round"){
-// 		std::cerr<<"round"<<std::endl;
-		auto dataitem=vars[0]->to_double();
-		auto ndig=vars[1]->to_double();
-		double mult=pow(10, ndig);
-// 		std::cerr<<dataitem<<" "<<mult<<std::endl;
-		return to_any( int( dataitem * mult ) / mult );
-	}
-	else if (fname=="debug"){
-		std::cerr<<"DEBUG: ";
-		for(auto &v: vars)
-			std::cerr<<std::to_string(v)<<" ";
-		std::cerr<<std::endl;
-		return to_any( true );
-	}
-	throw std::runtime_error("Unknown function <"+fname+"> called.");
+	auto F=functions.find(fname);
+	if (F==std::end(functions))
+		throw std::runtime_error("Unknown function <"+fname+"> called.");
+	
+	return F->second(*this, vars);
 }
 
 any Context::get_glob_values(const std::string& glob){
@@ -204,4 +175,9 @@ std::vector<Symbol*> Context::symboltable_filter(const std::string &glob){
 		}
 	}
 	return ret;
+}
+
+void Context::register_function(std::string fnname, std::function<any (Context &, const std::vector<any> &)> f)
+{
+	functions[std::move(fnname)]=f;
 }
