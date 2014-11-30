@@ -215,6 +215,18 @@ namespace loglang{
 				return to_string_("Expr_sub");
 			}
 		};
+		class Expr_Expr : public Expr{
+		public:
+			Expr_Expr(AST op1, AST op2) : Expr(std::move(op1), std::move(op2)) {}
+			any eval(Context &context){
+				op1->eval(context); // Eval but ignore expr1, return expr2
+				auto r2=op2->eval(context);
+				return r2;
+			}
+			std::string to_string(){
+				return to_string_("Expr_Expr");
+			}
+		};
 		
 		class Edge_if : public Expr{
 		public:

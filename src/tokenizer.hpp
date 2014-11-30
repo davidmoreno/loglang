@@ -47,6 +47,8 @@ namespace loglang{
 			AT=11,
 			DO=12,
 			COMMA=13,
+			OPEN_CURLY=14,
+			CLOSE_CURLY=15,
 			
 			INVALID=255
 		};

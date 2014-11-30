@@ -87,6 +87,10 @@ static AST parse_expression(Tokenizer &tokenizer, Token::type_t end, Token::type
 	AST op1;
 	if (tok.type==Token::OPEN_PAREN)
 		op1=parse_expression(tokenizer, Token::CLOSE_PAREN);
+	else if (tok.type==Token::OPEN_CURLY)
+		op1=parse_expression(tokenizer, Token::CLOSE_CURLY);
+	else if (tok.type==Token::CLOSE_CURLY && end==Token::CLOSE_CURLY) // Empty {} 0.
+		return std::make_unique<ast::Value>(Token("0", Token::NUMBER));
 	else if (tok.type==Token::NUMBER || tok.type==Token::STRING)
 		op1=std::make_unique<ast::Value>(tok);
 	else if (tok.type==Token::VAR){
@@ -155,6 +159,8 @@ static AST parse_expression(Tokenizer &tokenizer, Token::type_t end, Token::type
 			return std::make_unique<ast::Expr_add>(std::move(op1), std::move(op2));
 		else if (op.token=="-")
 			return std::make_unique<ast::Expr_sub>(std::move(op1), std::move(op2));
+		else if (op.token==";")
+			return std::make_unique<ast::Expr_Expr>(std::move(op1), std::move(op2));
 		else
 			throw unexpected_token_type(tokenizer.position_to_string() + "; Cant parse this type of op yet. ("+op.token+")");
 	}

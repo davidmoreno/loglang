@@ -23,7 +23,7 @@
 
 using namespace loglang;
 
-static std::string ops="*/+-%=<>!";
+static std::string ops="*/+-%=<>!;";
 static std::string ops2letter_1="><=!";
 // static std::string ops2letter_2="="; // Just one option, better simple =
 
@@ -54,6 +54,10 @@ Token Tokenizer::real_next()
 		return Token(*pos++, Token::COMMA);
 	else if (*pos==')')
 		return Token(*pos++, Token::CLOSE_PAREN);
+	else if (*pos=='{')
+		return Token(*pos++, Token::OPEN_CURLY);
+	else if (*pos=='}')
+		return Token(*pos++, Token::CLOSE_CURLY);
 	else if (std::find(std::begin(ops), std::end(ops), *pos)!=std::end(ops)){
 		auto c=*pos++;
 		auto tok=Token(c, Token::OP);
