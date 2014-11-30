@@ -18,20 +18,21 @@ mem.total 0
 :cpu.cpu%   at timestamp do easy.cpu.cpu% = round( 100.0 - ( ( _cpu.user_d * 100.0 ) / _cpu.sum_d ) , 3 )
 
 # 512 is sector size as reported.
-:disk.read_d   at disk.sda.read do easy.disk.read    = (( sum( disk.?d?.read ) - _disk.read ) * 512.0 )
-:disk.read     at disk.sda.read do _disk.read        = sum( disk.?d?.read )
-:disk.write_d  at disk.sda.write do easy.disk.write  = (( sum( disk.?d?.write ) - _disk.write ) * 512.0 )
-:disk.write    at disk.sda.write do _disk.write      = sum( disk.?d?.write )
-:showdisk      at timestamp do print ( "easy.disk.*" )
-:dist.to_zero   at timestamp do { easy.disk.read=0; easy.disk.write=0; } # set to 0, then if any activity, it will change.
+:disk.read_d   at timestamp do easy.disk.read    = (( sum( disk.?d?.read ) - _disk.read ) * 512.0 )
+:disk.read     at timestamp do _disk.read        = sum( disk.?d?.read )
+:disk.write_d  at timestamp do easy.disk.write  = (( sum( disk.?d?.write ) - _disk.write ) * 512.0 )
+:disk.write    at timestamp do _disk.write      = sum( disk.?d?.write )
 
-:show-all   at timestamp do print(easy.*)
+# Same for net
+:net.read_d   at timestamp do easy.net.read    = ( sum( net.*.read ) - _net.read )
+:net.read     at timestamp do _net.read        = sum( net.*.read )
+:net.write_d  at timestamp do easy.net.write  = ( sum( net.*.write ) - _net.write )
+:net.write    at timestamp do _net.write      = sum( net.*.write )
 
+# at end, when timestamp arrives.
 
-# :show-%   at *% do print(%) # show only those which end at %
-# :show-mem   at mem.free% do print("mem.free%")
-# :show-cpu   at cpu.cpu% do print("cpu.cpu%")
-# :show-cpu   at _cpu.* do print(%)
-
+:show-all   at timestamp do print("easy.*")
 :showtimestamp at timestamp do print("timestamp")
 
+# set some values for next round.
+:dist.to_zero   at timestamp do { easy.disk.read=0; easy.disk.write=0; } # set to 0, then if any activity, it will change.

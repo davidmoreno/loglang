@@ -122,24 +122,35 @@ namespace loglang{
 
 // Other functions.
 
-std::string std::to_string(const loglang::any& any){
+std::string std::to_string(const loglang::any &any)
+{
+	return std::to_string(any.get());
+}
+
+
+std::string std::to_string(const loglang::value_base *any){
 	{
-		auto val=dynamic_cast<loglang::string*>(any.get());
+		auto val=dynamic_cast<const loglang::string*>(any);
 		if (val)
 			return std::string("\"")+val->to_string()+std::string("\"");
 	}
 	{
-		auto val=dynamic_cast<loglang::_int*>(any.get());
+		auto val=dynamic_cast<const loglang::_int*>(any);
 		if (val)
 			return std::to_string(val->to_int());
 	}
 	{
-		auto val=dynamic_cast<loglang::_double*>(any.get());
+		auto val=dynamic_cast<const loglang::_double*>(any);
 		if (val)
 			return std::to_string(val->to_double());
 	}
 	{
-		auto val=dynamic_cast<loglang::_list*>(any.get());
+		auto val=dynamic_cast<const loglang::_bool*>(any);
+		if (val)
+			return val->to_bool() ? "true" : "false";
+	}
+	{
+		auto val=dynamic_cast<const loglang::_list*>(any);
 		if (val){
 			std::stringstream ret;
 			ret<<"[";

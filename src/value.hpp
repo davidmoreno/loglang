@@ -20,13 +20,33 @@
 #include <vector>
 #include <memory>
 
+
 namespace loglang{
 	class value_base;
 	using any = std::unique_ptr<value_base>;
+}
 
+namespace std{
+	std::string to_string(const loglang::any &any);
+	std::string to_string(const loglang::value_base *any);
+}
+
+namespace loglang{
 	class value_base{
 	public:
-		class invalid_conversion : public std::exception {};
+		class invalid_conversion : public std::exception {
+			std::string str;
+		public:
+			invalid_conversion(std::string _str, const value_base *v){
+				str="Invalid conversion to ";
+				str+=_str;
+				str+=" from ";
+				str+=std::to_string(v);
+			}
+			const char* what() const throw() override{
+				return str.c_str();
+			}
+		};
 	public:
 		virtual ~value_base(){}
 		
@@ -34,19 +54,19 @@ namespace loglang{
 		virtual int cmp(const any &) const = 0;
 		
 		virtual int64_t to_int() const{
-			throw invalid_conversion();
+			throw invalid_conversion("int", this);
 		}
 		virtual double to_double() const{
-			throw invalid_conversion();
+			throw invalid_conversion("double", this);
 		}
 		virtual const std::string &to_string() const{
-			throw invalid_conversion();
+			throw invalid_conversion("string", this);
 		}
 		virtual bool to_bool() const{
-			throw invalid_conversion();
+			throw invalid_conversion("bool", this);
 		}
 		virtual const std::vector<any> &to_list() const{
-			throw invalid_conversion();
+			throw invalid_conversion("list", this);
 		}
 	};
 	class string;
@@ -64,7 +84,3 @@ namespace loglang{
 	
 	bool operator==(const any &, const any &);
 };
-
-namespace std{
-	std::string to_string(const ::loglang::any &any);
-}

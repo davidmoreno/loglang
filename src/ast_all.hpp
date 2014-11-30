@@ -167,7 +167,7 @@ namespace loglang{
 		public:
 			Expr_gte(AST op1, AST op2) : Expr(std::move(op1), std::move(op2)) {}
 			any eval(Context &context){
-				return to_any( op1->eval(context)->to_double() > op2->eval(context)->to_double() );
+				return to_any( op1->eval(context)->to_double() >= op2->eval(context)->to_double() );
 			}
 			std::string to_string(){
 				return to_string_("Expr_gte");
@@ -215,6 +215,30 @@ namespace loglang{
 				return to_string_("Expr_sub");
 			}
 		};
+		class Expr_and : public Expr{
+		public:
+			Expr_and(AST op1, AST op2) : Expr(std::move(op1), std::move(op2)) {}
+			any eval(Context &context){
+				auto r1=op1->eval(context);
+				auto r2=op2->eval(context);
+				return to_any( r1->to_bool() && r2->to_bool() );
+			}
+			std::string to_string(){
+				return to_string_("Expr_and");
+			}
+		};
+		class Expr_or : public Expr{
+		public:
+			Expr_or(AST op1, AST op2) : Expr(std::move(op1), std::move(op2)) {}
+			any eval(Context &context){
+				auto r1=op1->eval(context);
+				auto r2=op2->eval(context);
+				return to_any( r1->to_bool() || r2->to_bool() );
+			}
+			std::string to_string(){
+				return to_string_("Expr_and");
+			}
+		};
 		class Expr_Expr : public Expr{
 		public:
 			Expr_Expr(AST op1, AST op2) : Expr(std::move(op1), std::move(op2)) {}
@@ -236,7 +260,7 @@ namespace loglang{
 			Edge_if(AST _cond, AST if_true, AST if_false) : Expr(std::move(if_true), std::move(if_false)) , cond(std::move(_cond)), prev_value(false) {
 			}
 			any eval(Context &context){
-				bool current=cond->eval(context)->to_int();
+				bool current=cond->eval(context)->to_bool();
 				if (current!=prev_value){
 					prev_value=current;
 					if (current)

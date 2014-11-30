@@ -31,7 +31,7 @@ int main(int argc, char **argv){
 		for(int i=1;i<argc;i++){
 			std::ifstream fin(argv[i],std::ios::in);
 			if (!fin.is_open()){
-				throw std::exception();
+				throw std::ios_base::failure(std::string("Cant open ")+argv[i]);
 			}
 			while(!fin.eof()){
 				std::getline(fin, line);

@@ -161,6 +161,10 @@ static AST parse_expression(Tokenizer &tokenizer, Token::type_t end, Token::type
 			return std::make_unique<ast::Expr_sub>(std::move(op1), std::move(op2));
 		else if (op.token==";")
 			return std::make_unique<ast::Expr_Expr>(std::move(op1), std::move(op2));
+		else if (op.token=="and")
+			return std::make_unique<ast::Expr_and>(std::move(op1), std::move(op2));
+		else if (op.token=="or")
+			return std::make_unique<ast::Expr_or>(std::move(op1), std::move(op2));
 		else
 			throw unexpected_token_type(tokenizer.position_to_string() + "; Cant parse this type of op yet. ("+op.token+")");
 	}
