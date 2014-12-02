@@ -123,64 +123,65 @@ namespace loglang{
 }
 
 // Other functions.
+namespace std{
+	std::string to_string(const loglang::value_base *any);
 
-std::string std::to_string(const loglang::value_base *any);
-
-std::string std::to_string(const loglang::any &any)
-{
-	return std::to_string(static_cast<const loglang::value_base *>(any.get()));
-}
+	std::string to_string(const loglang::any &any)
+	{
+		return to_string(static_cast<const loglang::value_base *>(any.get()));
+	}
 
 
-std::string std::to_string(const loglang::value_base *any){
-	{
-		auto val=dynamic_cast<const loglang::string*>(any);
-		if (val)
-			return std::string("\"")+val->to_string()+std::string("\"");
-	}
-	{
-		auto val=dynamic_cast<const loglang::_int*>(any);
-		if (val)
-			return std::to_string(val->to_int());
-	}
-	{
-		auto val=dynamic_cast<const loglang::_double*>(any);
-		if (val)
-			return std::to_string(val->to_double());
-	}
-	{
-		auto val=dynamic_cast<const loglang::_bool*>(any);
-		if (val)
-			return val->to_bool() ? "true" : "false";
-	}
-	{
-		auto val=dynamic_cast<const loglang::_list*>(any);
-		if (val){
-			std::stringstream ret;
-			ret<<"[";
-			bool first=true;
-			for(auto &v: val->to_list()){
-				if (!first){
-					ret<<", ";
-				}
-				else
-					first=false;
-				ret<<std::to_string(v);
-			}
-			ret<<"]";
-			return ret.str();
+	std::string to_string(const loglang::value_base *any){
+		{
+			auto val=dynamic_cast<const loglang::string*>(any);
+			if (val)
+				return std::string("\"")+val->to_string()+std::string("\"");
 		}
-	}
-	
-	std::string tpename=typeid(*any).name();
-	int st;
-	char *demangled=abi::__cxa_demangle(tpename.c_str(), 0, 0, &st);
-	if (demangled){
-		tpename=demangled;
-		free(demangled);
-	}
+		{
+			auto val=dynamic_cast<const loglang::_int*>(any);
+			if (val)
+				return std::to_string(val->to_int());
+		}
+		{
+			auto val=dynamic_cast<const loglang::_double*>(any);
+			if (val)
+				return std::to_string(val->to_double());
+		}
+		{
+			auto val=dynamic_cast<const loglang::_bool*>(any);
+			if (val)
+				return val->to_bool() ? "true" : "false";
+		}
+		{
+			auto val=dynamic_cast<const loglang::_list*>(any);
+			if (val){
+				std::stringstream ret;
+				ret<<"[";
+				bool first=true;
+				for(auto &v: val->to_list()){
+					if (!first){
+						ret<<", ";
+					}
+					else
+						first=false;
+					ret<<std::to_string(v);
+				}
+				ret<<"]";
+				return ret.str();
+			}
+		}
+		
+		std::string tpename=typeid(*any).name();
+		int st;
+		char *demangled=abi::__cxa_demangle(tpename.c_str(), 0, 0, &st);
+		if (demangled){
+			tpename=demangled;
+			free(demangled);
+		}
 
-	return std::string("[[")+tpename+"]]";
+		return std::string("[[")+tpename+"]]";
+	}
 }
 
 using namespace loglang;
