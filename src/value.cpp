@@ -18,7 +18,9 @@
 #include <iostream>
 
 #include "value.hpp"
+#include "utils.hpp"
 #include "cxxabi.h"
+
 
 
 /// Implementation of types.
@@ -122,9 +124,11 @@ namespace loglang{
 
 // Other functions.
 
+std::string std::to_string(const loglang::value_base *any);
+
 std::string std::to_string(const loglang::any &any)
 {
-	return std::to_string(any.get());
+	return std::to_string(static_cast<const loglang::value_base *>(any.get()));
 }
 
 

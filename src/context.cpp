@@ -17,7 +17,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <boost/algorithm/string.hpp>
+#include <algorithm>
 
 #include "context.hpp"
 #include "program.hpp"
@@ -48,7 +48,7 @@ void Context::feed(const std::string& _data)
 		}
 	}
 	if (std::isspace(data[0]))
-		boost::algorithm::trim(data);
+		trim(data);
 	if (data.length()==0)
 		return;
 	

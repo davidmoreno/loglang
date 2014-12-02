@@ -60,4 +60,13 @@ namespace loglang {
 	double to_number(const std::string &str){
 		return std::atof(str.c_str());
 	}
+
+	void trim(std::string &str){
+		if (str.length()==0)
+			return;
+		auto begin=std::find_if(std::begin(str), std::end(str), [](char c){ return !isspace(c); });
+		auto end=std::find_if(str.rbegin(), str.rend(), [](char c){ return !isspace(c); });
+		str=std::string( begin, end.base() );
+	}
 }
+
