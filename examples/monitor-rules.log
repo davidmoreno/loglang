@@ -1,9 +1,9 @@
-/Log started: (?P<sd>.*)/ log.started.date = sd
-/Log ended: (?P<ed>.*)/ log.ended.date = ed
+/Log started: (.*)/ log.started.date = .1
+/Log ended: (.*)/ log.ended.date = .2
 
 :showlog at log.* do print(%)
 
-/(?P<k>[^ ]+) (?P<v>.*)/  [k]=to_int(v)
+/([^ ]+) (.*)/  [.1]=to_int(.2)
 
 
 #/^$/

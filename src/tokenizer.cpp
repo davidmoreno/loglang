@@ -42,7 +42,7 @@ Token Tokenizer::real_next()
 	Token::type_t type=Token::_EOF;
 	if (*pos=='"') // For multichar tokens, set type.
 		type=Token::STRING;
-	else if (std::isalpha(*pos) || *pos=='_')
+	else if (std::isalpha(*pos) || *pos=='_' || *pos=='.')
 		type=Token::VAR;
 	else if (*pos=='%')
 		return Token(*pos++,Token::VAR);
