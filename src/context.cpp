@@ -24,6 +24,7 @@
 #include "glob.hpp"
 #include "utils.hpp"
 #include "builtins.hpp"
+#include "parser.hpp"
 
 using namespace loglang;
 
@@ -52,7 +53,7 @@ void Context::feed(const std::string& _data)
 	if (data.length()==0)
 		return;
 	
-	if (data.length()>0 && data[0]==':'){ // New program
+	if (data[0]==':'){ // New program
 		auto colonpos=data.find_first_of(' ');
 		auto key=data.substr(0, colonpos);
 		if (colonpos>=data.length()){ // Remove, no program
@@ -99,11 +100,28 @@ void Context::feed(const std::string& _data)
 			}
 		}
 	}
+	else if (data[0]=='/'){ // New regex
+		auto end=std::find(std::begin(data)+1, std::end(data), '/');
+		if (end==std::end(data))
+			throw parsing_exception("Invalid regex");
+		std::string regex(std::begin(data)+1, end); 
+		
+		auto prog=std::make_shared<Program>(regex, std::string(end+1, std::end(data)));
+
+		RegexParser::cb_t cb=[prog, regex](Context &ctx){
+// 			ctx.output(std::string("Found regex: ")+regex);
+			ctx.debug_values();
+			prog->run(ctx);
+		};
+		regex_parser.addRegex( regex, cb);
+	}
 	else{ // Data
-		auto spacepos=data.find_first_of(' ');
-		auto key=data.substr(0, spacepos);
-		auto value=data.substr(spacepos+1);
-		get_value(key).set(to_any(to_number(value)), *this);
+		if (! regex_parser.parse(data, *this) ){
+			auto spacepos=data.find_first_of(' ');
+			auto key=data.substr(0, spacepos);
+			auto value=data.substr(spacepos+1);
+			get_value(key).set(to_any(to_number(value)), *this);
+		}
 	}
 }
 

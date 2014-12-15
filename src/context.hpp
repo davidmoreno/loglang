@@ -21,6 +21,7 @@
 #include <unordered_map>
 
 #include "symbol.hpp"
+#include "regexparser.hpp"
 // #include "program.hpp"
 
 namespace loglang{
@@ -32,6 +33,7 @@ namespace loglang{
 		std::unordered_map<std::string, std::shared_ptr<Program>> glob_dependencies_programs;
 		std::unordered_map<std::string, std::shared_ptr<Program>> programs;
 		std::unordered_map<std::string, std::function<any (Context &, const std::vector<any> &)>> functions;
+		RegexParser regex_parser;
 	public:
 		Context();
 		void feed(const std::string &data);
@@ -39,6 +41,9 @@ namespace loglang{
 		void output(const std::string &str){ _output(str); }
 		void output(const std::string &str, const std::string &str2);
 		Symbol &get_value(const std::string &key);
+		
+		void push_context(){};
+		void pop_context(){};
 		
 		/// Returns the resolved glob values. 
 		any get_glob_values(const std::string &glob);

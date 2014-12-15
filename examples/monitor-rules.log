@@ -1,7 +1,9 @@
-/Log started: (.*)/ log.started.date = $1
-/Log ended: (.*)/ log.ended.date = $1
+/Log started: (?P<sd>.*)/ log.started.date = sd
+/Log ended: (?P<ed>.*)/ log.ended.date = ed
 
-#/([^ ]) (.*)/  [$1] = $2
+:showlog at log.* do print(%)
+
+/(?P<k>[^ ]*) (?P<v>.*)/  k = v
 #/^$/
 #/Unpacking .* (.*/ unpacking = $1
 
