@@ -1,3 +1,7 @@
+Log started: 1234
+Log ended: 4321
+Log started: 5321
+
 timestamp 1
 mem.free 10
 mem.total 100

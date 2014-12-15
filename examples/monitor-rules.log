@@ -1,3 +1,10 @@
+/Log started: (.*)/ log.started.date = $1
+/Log ended: (.*)/ log.ended.date = $1
+
+#/([^ ]) (.*)/  [$1] = $2
+#/^$/
+#/Unpacking .* (.*/ unpacking = $1
+
 # some initial values, to prevent non defined errors
 cpu.cpu.idle 0
 cpu.cpu.nice 0

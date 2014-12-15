@@ -18,6 +18,7 @@
 #include "tokenizer.hpp"
 #include "ast.hpp"
 #include "ast_all.hpp"
+#include "program.hpp"
 
 using namespace loglang;
 

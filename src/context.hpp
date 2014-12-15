@@ -21,9 +21,11 @@
 #include <unordered_map>
 
 #include "symbol.hpp"
-#include "program.hpp"
+// #include "program.hpp"
 
 namespace loglang{
+	class Program;
+	
 	class Context{
 		std::function<void (const std::string &output)> _output;
 		std::unordered_map<std::string, Symbol> symboltable;
