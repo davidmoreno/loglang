@@ -17,6 +17,7 @@
 #pragma once
 
 #include <algorithm>
+
 #include "tokenizer.hpp"
 
 #include "utils.hpp"
@@ -298,6 +299,37 @@ namespace loglang{
 				return to_string_("At");
 			}
 		};
+		class Indirect : public ASTBase{
+			AST ind;
+		public:
+			Indirect(AST _ind):ind(std::move(_ind)){}
+			any eval(Context &context){
+				return ind->eval(context);
+			}
+			std::set< std::string > dependencies(){
+				return ind->dependencies();
+			}
+			std::string to_string() override{
+				return std::string("<Indirect ")+ind->to_string()+">";
+			};
+		};
+		class LVEqual : public Expr{
+		public:
+			LVEqual(AST _op1, AST _op2) : Expr(std::move(_op1),std::move(_op2)){}
+			any eval(Context &context){
+				auto op1_res=op1->eval(context);
+				auto op2_res=op2->eval(context);
+				context.get_value(op1_res->to_string()).set(op2_res->clone(), context);
+				return op2_res;
+			}
+			std::set< std::string > dependencies(){
+				return op2->dependencies();
+			}
+			std::string to_string(){
+				return "<LVEqual "+op1->to_string()+" "+op2->to_string()+">";
+			};
+		};
+
 		class Function : public ASTBase{
 		public:
 			Function(std::string fn) : fnname(std::move(fn)){}

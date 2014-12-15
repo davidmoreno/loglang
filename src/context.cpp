@@ -109,8 +109,6 @@ void Context::feed(const std::string& _data)
 		auto prog=std::make_shared<Program>(regex, std::string(end+1, std::end(data)));
 
 		RegexParser::cb_t cb=[prog, regex](Context &ctx){
-// 			ctx.output(std::string("Found regex: ")+regex);
-			ctx.debug_values();
 			prog->run(ctx);
 		};
 		regex_parser.addRegex( regex, cb);

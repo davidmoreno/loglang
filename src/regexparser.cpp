@@ -102,28 +102,30 @@ bool RegexParser::parse(const std::string& str, Context &ctx)
 			if (rc<=0){
 				throw parsing_exception("Error executing the regex");
 			}
-			ctx.push_context();
-			
 			char *name_table;
 			int name_entry_size;
 			pcre_fullinfo(re_cb.re, NULL, PCRE_INFO_NAMETABLE, &name_table); 
 			pcre_fullinfo(re_cb.re, NULL, PCRE_INFO_NAMEENTRYSIZE, &name_entry_size);
 			int i;
 			char *tabptr = name_table;
-			
+			for (i = 0; i < rc; i++){
+				std::string val=std::string(std::begin(str)+ovector[2*i], std::begin(str)+ovector[2*i+1]);
+				ctx.get_value(std::string(".")+std::to_string(i)).set(loglang::to_any(val), ctx);
+			}
+
 			for (i = 0; i < re_cb.namecount; i++){
 				int n=(tabptr[0] << 8) | tabptr[1];
 				std::string key(tabptr+2, name_entry_size-3);
 				std::string val=std::string(std::begin(str)+ovector[2*n], std::begin(str)+ovector[2*n+1]);
 
 // 				std::cerr<<"S "<<key<<" "<<val<<std::endl;
-				ctx.get_value(key).set(loglang::to_any(val), ctx);
-				name_table+=name_entry_size;
+				any an=loglang::to_any(val);
+// 				std::cerr<<"V "<<std::to_string(an)<<std::endl;
+				ctx.get_value(key).set(std::move(an), ctx);
+				tabptr+=name_entry_size;
 			}
 			
 			re_cb.cb(ctx);
-			
-			ctx.pop_context();
 		}
 	}
 	return false;

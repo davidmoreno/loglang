@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <iostream>
 #include <algorithm>
 
 #include "symbol.hpp"
@@ -48,9 +49,14 @@ void Symbol::set(any new_val, Context &context)
 	if (val==new_val) // Ignore no changes.
 		return; 
 	val=std::move(new_val);
+// 	if (val)
+// 		std::cerr<<"Set val "<<_name<<" "<<std::to_string(val)<<std::endl;
+// 	else
+// 		std::cerr<<"Set val "<<_name<<" NULL"<<std::endl;
 // 	context.output(name, value);
 	if (_name=="%") // Prevent recursion.
 		return;
+	
 	context.get_value("%").set(to_any(_name), context);
 	for(auto program: at_modify)
 		program->run(context);

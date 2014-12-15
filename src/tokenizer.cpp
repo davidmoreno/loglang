@@ -58,6 +58,10 @@ Token Tokenizer::real_next()
 		return Token(*pos++, Token::OPEN_CURLY);
 	else if (*pos=='}')
 		return Token(*pos++, Token::CLOSE_CURLY);
+	else if (*pos=='[')
+		return Token(*pos++, Token::OPEN_BRACKET);
+	else if (*pos==']')
+		return Token(*pos++, Token::CLOSE_BRACKET);
 	else if (std::find(std::begin(ops), std::end(ops), *pos)!=std::end(ops)){
 		auto c=*pos++;
 		auto tok=Token(c, Token::OP);

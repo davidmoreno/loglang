@@ -42,9 +42,6 @@ namespace loglang{
 		void output(const std::string &str, const std::string &str2);
 		Symbol &get_value(const std::string &key);
 		
-		void push_context(){};
-		void pop_context(){};
-		
 		/// Returns the resolved glob values. 
 		any get_glob_values(const std::string &glob);
 		std::vector<Symbol*> symboltable_filter(const std::string &glob);

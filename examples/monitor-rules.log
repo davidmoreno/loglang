@@ -3,7 +3,9 @@
 
 :showlog at log.* do print(%)
 
-/(?P<k>[^ ]*) (?P<v>.*)/  k = v
+/(?P<k>[^ ]+) (?P<v>.*)/  [k]=to_int(v)
+
+
 #/^$/
 #/Unpacking .* (.*/ unpacking = $1
 

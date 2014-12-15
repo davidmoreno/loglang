@@ -90,6 +90,8 @@ static AST parse_expression(Tokenizer &tokenizer, Token::type_t end, Token::type
 		op1=parse_expression(tokenizer, Token::CLOSE_PAREN);
 	else if (tok.type==Token::OPEN_CURLY)
 		op1=parse_expression(tokenizer, Token::CLOSE_CURLY);
+	else if (tok.type==Token::OPEN_BRACKET)
+		op1=std::make_unique<ast::Indirect>( parse_expression(tokenizer, Token::CLOSE_BRACKET) );
 	else if (tok.type==Token::CLOSE_CURLY && end==Token::CLOSE_CURLY) // Empty {} 0.
 		return std::make_unique<ast::Value>(Token("0", Token::NUMBER));
 	else if (tok.type==Token::NUMBER || tok.type==Token::STRING)
@@ -134,11 +136,17 @@ static AST parse_expression(Tokenizer &tokenizer, Token::type_t end, Token::type
 	if (op.type==Token::OP){
 		if (op.token=="="){
 			ASTBase *op1p=&*op1;
-			auto var=dynamic_cast<ast::Value_var*>(op1p);
-			if (var==nullptr){
-				throw semantic_exception(tokenizer.position_to_string() + "; lvalue invalid. Only variables are allowed.");
+			{
+				auto var=dynamic_cast<ast::Value_var*>(op1p);
+				if (var)
+					return std::make_unique<ast::Equal>(std::move(var->val), std::move(op2));
 			}
-			return std::make_unique<ast::Equal>(std::move(var->val), std::move(op2));
+			{
+				auto var2=dynamic_cast<ast::Indirect*>(op1p);
+				if (var2)
+					return std::make_unique<ast::LVEqual>(std::move(op1), std::move(op2));
+			}
+			throw semantic_exception(tokenizer.position_to_string() + "; lvalue invalid. Only variables are allowed.");
 		}
 		if (op.token=="*")
 			return std::make_unique<ast::Expr_mul>(std::move(op1), std::move(op2));

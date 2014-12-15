@@ -49,6 +49,8 @@ namespace loglang{
 			COMMA=13,
 			OPEN_CURLY=14,
 			CLOSE_CURLY=15,
+			OPEN_BRACKET=16,
+			CLOSE_BRACKET=17,
 			
 			INVALID=255
 		};

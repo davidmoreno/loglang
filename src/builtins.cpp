@@ -59,6 +59,12 @@ namespace loglang{
 			return to_any( true );
 		}
 		
+		
+		static any to_int(Context &context, const std::vector<any> &vars){
+			if (vars.size()!=1)
+				throw std::runtime_error("Invalid number of arguments for to_int.");
+			return to_any(int64_t(atoi(vars[0]->to_string().c_str())));
+		}
 	}
 	
 }
@@ -68,4 +74,5 @@ void loglang::register_builtins(loglang::Context& context){
 	context.register_function("print", &loglang::builtins::print);
 	context.register_function("round", &loglang::builtins::round);
 	context.register_function("debug", &loglang::builtins::debug);
+	context.register_function("to_int", &loglang::builtins::to_int);
 }
