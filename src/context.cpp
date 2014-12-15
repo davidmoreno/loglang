@@ -107,6 +107,11 @@ void Context::feed(const std::string& _data)
 		auto end=std::find(std::begin(data)+1, std::end(data), '/');
 		if (end==std::end(data))
 			throw parsing_exception("Invalid regex");
+		while (*(end-1) == '\\'){
+			end=std::find(end+1, std::end(data), '/');
+			if (end==std::end(data))
+				throw parsing_exception("Invalid regex");
+		}
 		std::string regex(std::begin(data)+1, end); 
 		
 		auto prog=std::make_shared<Program>(regex, std::string(end+1, std::end(data)));
