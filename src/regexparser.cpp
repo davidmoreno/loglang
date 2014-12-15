@@ -126,6 +126,7 @@ bool RegexParser::parse(const std::string& str, Context &ctx)
 			}
 			
 			re_cb.cb(ctx);
+			return true;
 		}
 	}
 	return false;

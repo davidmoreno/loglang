@@ -198,7 +198,13 @@ namespace loglang{
 		public:
 			Expr_add(AST op1, AST op2) : Expr(std::move(op1), std::move(op2)) {}
 			any eval(Context &context){
-				return to_any( op1->eval(context)->to_double() + op2->eval(context)->to_double() );
+				auto v1=op1->eval(context), v2=op2->eval(context);
+				try{
+					return to_any( v1->to_double() + v2->to_double() );
+				}
+				catch(loglang::value_base::invalid_conversion &e){
+					return to_any( v1->to_string() + v2->to_string() );
+				}
 			}
 			std::string to_string(){
 				return to_string_("Expr_add");
