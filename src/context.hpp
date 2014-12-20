@@ -34,7 +34,8 @@ namespace loglang{
 		std::unordered_map<std::string, std::function<any (Context &, const std::vector<any> &)>> functions;
 	public:
 		Context();
-		void feed(const std::string &data);
+		void feed_secure(std::string data);
+		void feed(std::string data);
 		void set_output(std::function<void (const std::string &output)> &&);
 		void output(const std::string &str){ _output(str); }
 		void output(const std::string &str, const std::string &str2);

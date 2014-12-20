@@ -69,5 +69,6 @@ namespace loglang{
 	void print_backtrace();
 	double to_number(const std::string &str);
 	void trim(std::string &);
+	void clean(std::string &);
 };
 
