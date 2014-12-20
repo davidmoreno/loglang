@@ -29,7 +29,7 @@ namespace loglang{
 	class string : public value_base{
 		std::string str;
 	public:
-		string(std::string str) : str(std::move(str)) {}
+		string(std::string str) : value_base("string"), str(std::move(str)) {}
 		const std::string &to_string() const override{
 			return str;
 		}
@@ -43,7 +43,7 @@ namespace loglang{
 	class _double : public value_base{
 		double val;
 	public:
-		_double(double d) : val(d) {}
+		_double(double d) : value_base("double"), val(d) {}
 		virtual double to_double() const override{
 			return val;
 		}
@@ -59,7 +59,7 @@ namespace loglang{
 	class _int : public value_base{
 		int64_t val;
 	public:
-		_int(int64_t d) : val(d) {}
+		_int(int64_t d) : value_base("int"), val(d) {}
 		virtual int64_t to_int() const override{
 			return val;
 		}
@@ -77,7 +77,7 @@ namespace loglang{
 	class _bool : public value_base{
 		bool val;
 	public:
-		_bool(bool d) : val(d) {}
+		_bool(bool d) : value_base("bool"), val(d) {}
 		std::unique_ptr< value_base > clone() const override{
 			return to_any(val);
 		}
@@ -91,7 +91,7 @@ namespace loglang{
 	class _list : public value_base{
 		std::vector<any> val;
 	public:
-		_list(std::vector<any> d) : val(std::move(d)) {}
+		_list(std::vector<any> d) : value_base("list"), val(std::move(d)) {}
 		std::unique_ptr< value_base > clone() const override{
 			std::vector<any> copy;
 			for(auto &a: val)
@@ -130,7 +130,6 @@ namespace std{
 	{
 		return to_string(static_cast<const loglang::value_base *>(any.get()));
 	}
-
 
 	std::string to_string(const loglang::value_base *any){
 		{

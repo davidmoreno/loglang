@@ -48,6 +48,9 @@ namespace loglang{
 			}
 		};
 	public:
+		const std::string type_name;
+		
+		value_base(std::string _type_name) : type_name(std::move(_type_name)) {} 
 		virtual ~value_base(){}
 		
 		virtual any clone() const = 0;
