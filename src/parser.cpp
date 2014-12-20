@@ -61,9 +61,9 @@ static AST parse_at(Tokenizer &tokenizer, Token::type_t end, Token::type_t end2)
 	return std::make_unique<ast::At>(std::move(cond), std::move(_do));
 }
 
-static AST parse_function_call(Token fname, Tokenizer &tokenizer){
+static AST parse_function_call(const std::string &fname, Tokenizer &tokenizer){
 	auto tok=tokenizer.next();
-	auto fn=std::make_unique<ast::Function>(fname.token);
+	auto fn=std::make_unique<ast::Function>(fname);
 	if (tok.type==Token::CLOSE_PAREN)
 		return std::move(fn);
 	tokenizer.rewind(); // Not good, but necessary
@@ -93,9 +93,9 @@ static AST parse_expression(Tokenizer &tokenizer, Token::type_t end, Token::type
 	else if (tok.type==Token::OPEN_BRACKET)
 		op1=std::make_unique<ast::Indirect>( parse_expression(tokenizer, Token::CLOSE_BRACKET) );
 	else if (tok.type==Token::CLOSE_CURLY && end==Token::CLOSE_CURLY) // Empty {} 0.
-		return std::make_unique<ast::Value>(Token("0", Token::NUMBER));
+		return std::make_unique<ast::Value_const>(Token("0", Token::NUMBER));
 	else if (tok.type==Token::NUMBER || tok.type==Token::STRING)
-		op1=std::make_unique<ast::Value>(tok);
+		op1=std::make_unique<ast::Value_const>(tok);
 	else if (tok.type==Token::VAR){
 		if (std::find(std::begin(tok.token), std::end(tok.token), '*')==std::end(tok.token) && std::find(std::begin(tok.token), std::end(tok.token), '?')==std::end(tok.token))
 			op1=std::make_unique<ast::Value_var>(tok);
@@ -124,7 +124,7 @@ static AST parse_expression(Tokenizer &tokenizer, Token::type_t end, Token::type
 		if (var==nullptr){
 			throw semantic_exception(tokenizer.position_to_string() + "; lvalue invalid. Only function names are allowed.");
 		}
-		op1 = parse_function_call(std::move(var->val), tokenizer);
+		op1 = parse_function_call(std::move(var->var), tokenizer);
 		op=tokenizer.next();
 	}
 	if (op.type==end || op.type==end2)
@@ -139,12 +139,7 @@ static AST parse_expression(Tokenizer &tokenizer, Token::type_t end, Token::type
 			{
 				auto var=dynamic_cast<ast::Value_var*>(op1p);
 				if (var)
-					return std::make_unique<ast::Equal>(std::move(var->val), std::move(op2));
-			}
-			{
-				auto var2=dynamic_cast<ast::Indirect*>(op1p);
-				if (var2)
-					return std::make_unique<ast::LVEqual>(std::move(op1), std::move(op2));
+					return std::make_unique<ast::Equal>(std::move(var->var), std::move(op2));
 			}
 			throw semantic_exception(tokenizer.position_to_string() + "; lvalue invalid. Only variables are allowed.");
 		}
