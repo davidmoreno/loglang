@@ -26,35 +26,44 @@
 namespace loglang{
 	namespace ast{
 		class Equal : public ASTBase{
-			Token op1;
+			std::string var;
 			AST op2;
 		public:
-			Equal(Token op1, AST op2) : op1(op1), op2(std::move(op2)){}
+			Equal(std::string var, AST op2) : var(var), op2(std::move(op2)){}
 			any eval(Context &context){
 				auto op2_res=op2->eval(context);
-				context.get_value(op1.token).set(op2_res->clone(), context);
+				context.get_value(var).set(op2_res->clone(), context);
 				return op2_res;
 			}
 			std::set< std::string > dependencies(){
 				return op2->dependencies();
 			}
 			std::string to_string(){
-				return "<Equal "+op1.token+" "+op2->to_string()+">";
+				return "<Equal "+var+" "+op2->to_string()+">";
 			};
 		};
 		class Value : public ASTBase{
+		};
+		class Value_const : public Value{
 		public:
-			Token val;
-			Value(Token _val) : val(_val) {}
-			any eval(Context &context){
-				switch(val.type){
+			any val;
+			Value_const(Token t){
+				switch(t.type){
 					case Token::NUMBER:
-						return to_any(to_number(val.token));
+						if (std::find(std::begin(t.token),std::end(t.token),'.')==std::end(t.token))
+							val=std::move(to_any(int64_t(to_number(t.token))));
+						else
+							val=std::move(to_any(to_number(t.token)));
+					break;
 					case Token::STRING:
-						return to_any(val.token);
+						val=std::move(to_any(t.token));
+					break;
 					default:
-						throw parsing_exception("Unknown value type: "+val.token);
+						throw parsing_exception("Unknown value type: "+t.token);
 				}
+			}
+			any eval(Context &context){
+				return val->clone();
 			}
 			
 			std::set< std::string > dependencies(){
@@ -62,36 +71,38 @@ namespace loglang{
 			}
 			
 			std::string to_string(){
-				return "<Value "+val.token+">";
+				return "<Value_const "+std::to_string(val)+">";
 			};
 		};
 		class Value_var : public Value{
 		public:
-			Value_var(Token _val) : Value(_val) {}
+			std::string var;
+			Value_var(Token _val) : var(_val.token) {}
 			any eval(Context &context){
-				auto &v=context.get_value(val.token).get();
+				auto &v=context.get_value(var).get();
 				if (!v)
-					throw std::runtime_error(std::string("Value <")+val.token+"> undefined. Cant use yet.");
+					throw std::runtime_error(std::string("Value <")+var+"> undefined. Cant use yet.");
 				return v->clone();
 			}
 			std::set<std::string> dependencies(){
-				return { val.token };
+				return { var };
 			}
 			std::string to_string(){
-				return "<ValueVal "+val.token+">";
+				return "<Value_val "+var+">";
 			};
 		};
 		class Value_glob : public Value{
 		public:
-			Value_glob(Token _val) : Value(_val) {}
+			std::string var;
+			Value_glob(Token _val) : var(_val.token) {}
 			any eval(Context &context){
-				return context.get_glob_values( val.token );
+				return context.get_glob_values( var );
 			}
 			std::set<std::string> dependencies(){
-				return { val.token };
+				return { var };
 			}
 			std::string to_string(){
-				return "<ValueGlob "+val.token+">";
+				return "<ValueGlob "+var+">";
 			};
 		};
 		
