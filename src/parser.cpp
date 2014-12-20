@@ -141,6 +141,11 @@ static AST parse_expression(Tokenizer &tokenizer, Token::type_t end, Token::type
 				if (var)
 					return std::make_unique<ast::Equal>(std::move(var->var), std::move(op2));
 			}
+			{
+				auto var2=dynamic_cast<ast::Indirect*>(op1p);
+				if (var2)
+					return std::make_unique<ast::LVEqual>(std::move(op1), std::move(op2));
+			}
 			throw semantic_exception(tokenizer.position_to_string() + "; lvalue invalid. Only variables are allowed.");
 		}
 		if (op.token=="*")
