@@ -16,7 +16,9 @@
 
 #include <iostream>
 #include <fstream>
+
 #include "context.hpp"
+#include "utils.hpp"
 
 int main(int argc, char **argv){
 	auto &input=std::cin;
@@ -35,8 +37,9 @@ int main(int argc, char **argv){
 			}
 			while(!fin.eof()){
 				std::getline(fin, line);
-				
-				context.feed(line);
+				loglang::clean(line);
+				if (line.length()>0)
+					context.feed_secure(line);
 			}
 			fin.close();
 		}
@@ -44,7 +47,9 @@ int main(int argc, char **argv){
 		while(!input.eof()){
 			std::getline(input, line);
 			
-			context.feed(line);
+			loglang::clean(line);
+			if (line.length()>0)
+				context.feed(line);
 		}
 	}catch(const std::exception &e){
 		std::cerr<<"Uncatched exception. "<<e.what()<<std::endl;

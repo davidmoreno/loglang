@@ -40,22 +40,8 @@ Context::Context()
 	get_value("false").set(to_any(false), *this);
 }
 
-void Context::feed(const std::string& _data)
+void Context::feed_secure(std::string data)
 {
-	std::string data=_data;
-	if (data.length()==0)
-		return;
-	{
-		auto comment=std::find(std::begin(data), std::end(data), '#');
-		if (comment!=std::end(data)){ // Remove comments
-			data.erase(comment, std::end(data));
-		}
-	}
-	if (std::isspace(data[0]))
-		trim(data);
-	if (data.length()==0)
-		return;
-	
 	if (data[0]==':'){ // New program
 		auto colonpos=data.find_first_of(' ');
 		auto key=data.substr(0, colonpos);
@@ -122,14 +108,13 @@ void Context::feed(const std::string& _data)
 		regex_parser.addRegex( regex, cb);
 	}
 	else{ // Data
-		if (! regex_parser.parse(data, *this) ){
-			throw std::runtime_error("Could not parse line.");
-// 			auto spacepos=data.find_first_of(' ');
-// 			auto key=data.substr(0, spacepos);
-// 			auto value=data.substr(spacepos+1);
-// 			get_value(key).set(to_any(to_number(value)), *this);
-		}
+		feed(data);
 	}
+}
+
+void Context::feed(std::string data){
+	if (! regex_parser.parse(data, *this) )
+		throw std::runtime_error("Could not parse line.");
 }
 
 

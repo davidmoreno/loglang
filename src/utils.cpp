@@ -68,5 +68,15 @@ namespace loglang {
 		auto end=std::find_if(str.rbegin(), str.rend(), [](char c){ return !isspace(c); });
 		str=std::string( begin, end.base() );
 	}
+	
+	/// Cleans a line of comments and empt leading and ending spaces.
+	void clean(std::string &data){
+		auto comment=std::find(std::begin(data), std::end(data), '#');
+		if (comment!=std::end(data)){ // Remove comments
+			data.erase(comment, std::end(data));
+		}
+		if (std::isspace(data[0]))
+			trim(data);
+	}
 }
 
