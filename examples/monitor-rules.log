@@ -25,9 +25,9 @@ mem.total 0
 :cpu.cpu%   at timestamp do easy.cpu.cpu% = round( 100.0 - ( ( _cpu.user_d * 100.0 ) / _cpu.sum_d ) , 3 )
 
 # 512 is sector size as reported.
-:disk.read_d   at timestamp do easy.disk.read    = (( sum( disk.?d?.read ) - _disk.read ) * 512.0 )
+:disk.read_d   at timestamp do easy.disk.read    = (( sum( disk.?d?.read ) - _disk.read ) * 512 )
 :disk.read     at timestamp do _disk.read        = sum( disk.?d?.read )
-:disk.write_d  at timestamp do easy.disk.write  = (( sum( disk.?d?.write ) - _disk.write ) * 512.0 )
+:disk.write_d  at timestamp do easy.disk.write  = (( sum( disk.?d?.write ) - _disk.write ) * 512 )
 :disk.write    at timestamp do _disk.write      = sum( disk.?d?.write )
 
 # Same for net

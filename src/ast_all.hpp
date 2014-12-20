@@ -115,7 +115,12 @@ namespace loglang{
 		public:
 			Expr_mul(AST op1, AST op2) : Expr(std::move(op1), std::move(op2)) {}
 			any eval(Context &context){
-				return to_any( op1->eval(context)->to_double() * op2->eval(context)->to_double() );
+				auto r1=op1->eval(context);
+				auto r2=op2->eval(context);
+				if (r1->type_name==r2->type_name && r1->type_name=="int")
+					return to_any( op1->eval(context)->to_int() * op2->eval(context)->to_int() );
+				else
+					return to_any( op1->eval(context)->to_double() * op2->eval(context)->to_double() );
 			}
 			std::string to_string(){
 				return to_string_("Expr_mul");
@@ -197,7 +202,15 @@ namespace loglang{
 		public:
 			Expr_add(AST op1, AST op2) : Expr(std::move(op1), std::move(op2)) {}
 			any eval(Context &context){
-				return to_any( op1->eval(context)->to_double() + op2->eval(context)->to_double() );
+				auto r1=op1->eval(context);
+				auto r2=op2->eval(context);
+				if (r1->type_name==r2->type_name){
+					if (r1->type_name=="string")
+						return to_any( r1->to_string() + r2->to_string() );
+					if (r1->type_name=="int")
+						return to_any( r1->to_int() + r2->to_int() );
+				}
+				return to_any( r1->to_double() + r2->to_double() );
 			}
 			std::string to_string(){
 				return to_string_("Expr_add");
@@ -209,6 +222,10 @@ namespace loglang{
 			any eval(Context &context){
 				auto r1=op1->eval(context);
 				auto r2=op2->eval(context);
+				if (r1->type_name==r2->type_name){
+					if (r1->type_name=="int")
+						return to_any( r1->to_int() - r2->to_int() );
+				}
 				return to_any( r1->to_double() - r2->to_double() );
 			}
 			std::string to_string(){
