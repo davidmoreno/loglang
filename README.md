@@ -4,7 +4,7 @@ Its a rule based programming language. If the dependencies change, then the rule
 
 Data and code goes thought the same input, which may be a security problem.
 
-# Pseudo BNF
+# Outdated Pseudo BNF
 
 	Program -> []
 	[OP] -> + - / * < > <= >= == in and or
@@ -15,6 +15,7 @@ Data and code goes thought the same input, which may be a security problem.
 	[] -> at [] do []
 	[] -> [const]
 	[] -> [var]
+	[] -> '[' [] ']'  # construct variable at runtime, for example to create new ones or access runtime defined ones.
 	[] -> '[' (([],)* []|) ']' # list
 	[] -> { (([];)* []|) } # block, returns last value
 	[] -> [func]( (([],)* []|) ) 
@@ -35,6 +36,13 @@ Some remarks:
 
 * sum( list )  -- Sum of the given list values
 * print( var ) -- Prints the name and value of the given 
+* round( double, int ) -- Rounds to n digits
+* to_int(any) -- converts to to_int
+* debug( list ) -- Shows a debug entry.
+
+## Safe and unsafe streams.
+
+There are safe streams that an have also code, regexes and data, and unsafe that only has data. stdin is unsafe. All others are unsafe.
 
 # Programs vs data
 
