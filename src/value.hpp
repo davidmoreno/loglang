@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <unordered_map>
 
 
 namespace loglang{
@@ -71,12 +72,16 @@ namespace loglang{
 		virtual const std::vector<any> &to_list() const{
 			throw invalid_conversion("list", this);
 		}
+		virtual const std::unordered_map<std::string, any> &to_dict() const{
+			throw invalid_conversion("dict", this);
+		}
 	};
 	class string;
 	class _int;
 	class _double;
 	class _bool;
 	class _list;
+	class _dict;
 	
 	
 	any to_any(std::string str);
@@ -84,6 +89,7 @@ namespace loglang{
 	any to_any(int64_t val);
 	any to_any(bool val);
 	any to_any(std::vector<any> vec);
+	any to_any(std::unordered_map<std::string, any> vec);
 	
 	bool operator==(const any &, const any &);
 };

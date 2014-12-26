@@ -20,6 +20,8 @@
 #include "value.hpp"
 #include "utils.hpp"
 #include "cxxabi.h"
+#include <map>
+#include <unordered_map>
 
 
 
@@ -86,6 +88,63 @@ namespace loglang{
 		}
 		int cmp(const any &o) const{
 			return val!=o->to_bool();
+		}
+	};
+	class _dict : public value_base{
+		std::unordered_map<std::string, any> val;
+	public:
+		_dict() : value_base("dict") {}
+		std::unique_ptr< value_base > clone() const override{
+			std::unordered_map<std::string, any> ret;
+			for(auto &r: val)
+				ret[r.first]=r.second->clone();
+			return to_any(std::move(ret));
+		}
+		int cmp(const any &o) const{
+			return -1;
+		}
+		const std::unordered_map<std::string, any> &to_dict() const{
+			return val;
+		}
+		std::vector<std::string> keys(){
+			std::vector<std::string> k;
+			
+			for(auto &kv: val)
+				k.push_back(kv.first);
+			
+			return k;
+		}
+		std::vector<any> values(){
+			std::vector<any> v;
+			
+			for(auto &kv: val)
+				v.push_back(kv.second->clone());
+			
+			return v;
+		}
+		std::vector<std::pair<std::string, any>> pairs(){
+			std::vector<std::pair<std::string, any>> k;
+			
+			for(auto &kv: val)
+				k.push_back(std::pair<std::string, any>(kv.first, kv.second->clone()));
+			
+			return k;
+		}
+		
+		void set(std::string str, any a){
+			val[std::move(str)]=std::move(a);
+		}
+		any get(const std::string str){
+			auto r=val.find(str);
+			if (r==std::end(val))
+				throw std::runtime_error("Element does not exist.");
+			return r->second->clone();
+		}
+		void unset(const std::string str){
+			val.erase(str);
+		}
+		bool has(const std::string str){
+			return val.count(str)>0;
 		}
 	};
 	class _list : public value_base{
