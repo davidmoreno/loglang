@@ -19,6 +19,10 @@
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
 #include <llvm/ExecutionEngine/GenericValue.h>
+#include <llvm/Support/raw_ostream.h>
+#include <llvm/PassManager.h>
+#include <llvm/IR/IRPrintingPasses.h>
+#include <llvm/IR/IRBuilder.h>
 
 #include "ast.hpp"
 #include "ast_all.hpp"
@@ -53,7 +57,9 @@ JITProgram::JITProgram(const std::string &program_name, const AST& root_node){
 	llvm_function=llvm::Function::Create(FT, llvm::Function::ExternalLinkage, program_name, compile::context.module);
 
 	llvm::BasicBlock *bblock = llvm::BasicBlock::Create(llvm::getGlobalContext(), "entry", llvm_function);
-	
+	llvm::ReturnInst::Create(llvm::getGlobalContext(), nullptr, bblock);
+
+	showCode();
 }
 
 JITProgram::~JITProgram()
@@ -61,10 +67,21 @@ JITProgram::~JITProgram()
 	// FIXME! Remove all data for this function.
 }
 
+void JITProgram::showCode()
+{
+	std::cout << "Code generated.\n";
+	llvm::PassManager pm;
+	pm.add(llvm::createPrintModulePass(llvm::outs()));
+	pm.run(*loglang::compile::context.module);
+	std::cout<<std::endl;
+}
 
-void JITProgram::run(any&){
+
+void JITProgram::run(){
 	std::cout<<"Run"<<std::endl;
 	std::vector<llvm::GenericValue> args;
+	if (!llvm_function)
+		throw std::runtime_error("Function not compiled yet.");
 	compile::context.jit->runFunction(llvm_function, args);
 }
 

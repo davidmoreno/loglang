@@ -18,27 +18,35 @@
 #include <sstream>
 
 #include "program.hpp"
+#include "jitprogram.hpp"
 #include "parser.hpp"
 
 using namespace loglang;
 
 
-Program::Program(std::string _name, std::string _sourcecode) : name(std::move(_name)), sourcecode(std::move(_sourcecode))
+Program::Program(std::string _name, std::string _sourcecode) : name(std::move(_name)), sourcecode(std::move(_sourcecode)), jit(nullptr)
 {
-	ast=parse_program(sourcecode);
-	
+	auto ast=parse_program(sourcecode);
 	_dependencies=ast->dependencies();
+	jit=new JITProgram(name, ast);
 // 	std::cerr<<name<<std::endl;
 // 	std::cerr<<"deps "<<std::to_string(_dependencies)<<std::endl;
 // 	std::cerr<<"Compile: "<<_sourcecode<<std::endl;
 }
 
+Program::~Program()
+{
+	if (jit)
+		delete jit;
+}
+
+
 void Program::run(Context& context)
 {
 // 	std::cerr<<"Run "<<name<<std::endl;
-	if (ast){
+	if (jit){
 		try{
-			auto output=ast->eval(context);
+			jit->run();
 		}
 		catch(const std::exception &e){
 			std::cerr<<"ERROR running "<< name <<": "<<e.what()<<std::endl;

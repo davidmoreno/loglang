@@ -28,6 +28,7 @@ namespace loglang{
 		JITProgram(const std::string &program_name, const AST &root_node);
 		~JITProgram();
 		
-		void run(any &);
+		void showCode();
+		void run();
 	};
 };

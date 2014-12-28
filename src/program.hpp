@@ -23,15 +23,17 @@
 namespace loglang{
 	class Context;
 	class ASTBase;
+	class JITProgram;
 	
 	class Program{
 		std::string name;
 		std::string sourcecode;
 		std::set<std::string> _dependencies;
-		std::shared_ptr<ASTBase> ast;
+		JITProgram *jit;
 		
 	public:
 		Program(std::string name, std::string sourcecode);
+		~Program();
 		const std::set<std::string> &dependencies() const { return _dependencies; }
 		
 		void run(Context &context);
