@@ -42,7 +42,7 @@ namespace loglang{
 			std::string to_string(){
 				return "<Equal "+var+" "+op2->to_string()+">";
 			};
-			llvm::Value* compile() override;
+			llvm::Value* compile(CompileContext &context) override;
 		};
 		class Value : public ASTBase{
 		};
@@ -75,7 +75,7 @@ namespace loglang{
 			std::string to_string(){
 				return "<Value_const "+std::to_string(val)+">";
 			};
-			llvm::Value* compile() override;
+			llvm::Value* compile(CompileContext &context) override;
 		};
 		class Value_var : public Value{
 		public:
@@ -93,7 +93,7 @@ namespace loglang{
 			std::string to_string(){
 				return "<Value_val "+var+">";
 			};
-			llvm::Value* compile() override;
+			llvm::Value* compile(CompileContext &context) override;
 		};
 		class Value_glob : public Value{
 		public:
@@ -108,7 +108,7 @@ namespace loglang{
 			std::string to_string(){
 				return "<ValueGlob "+var+">";
 			};
-			llvm::Value* compile() override;
+			llvm::Value* compile(CompileContext &context) override;
 		};
 		
 		class Expr : public ASTBase{
@@ -141,7 +141,7 @@ namespace loglang{
 			std::string to_string(){
 				return to_string_("Expr_mul");
 			}
-			llvm::Value* compile() override;
+			llvm::Value* compile(CompileContext &context) override;
 		};
 		class Expr_div : public Expr{
 		public:
@@ -154,7 +154,7 @@ namespace loglang{
 			std::string to_string(){
 				return to_string_("Expr_div");
 			}
-			llvm::Value* compile() override;
+			llvm::Value* compile(CompileContext &context) override;
 		};
 		class Expr_lt : public Expr{
 		public:
@@ -165,7 +165,7 @@ namespace loglang{
 			std::string to_string(){
 				return to_string_("Expr_lt");
 			}
-			llvm::Value* compile() override;
+			llvm::Value* compile(CompileContext &context) override;
 		};
 		class Expr_lte : public Expr{
 		public:
@@ -176,7 +176,7 @@ namespace loglang{
 			std::string to_string(){
 				return to_string_("Expr_lte");
 			}
-			llvm::Value* compile() override;
+			llvm::Value* compile(CompileContext &context) override;
 		};
 		class Expr_gt : public Expr{
 		public:
@@ -187,7 +187,7 @@ namespace loglang{
 			std::string to_string(){
 				return to_string_("Expr_gt");
 			}
-			llvm::Value* compile() override;
+			llvm::Value* compile(CompileContext &context) override;
 		};
 		class Expr_gte : public Expr{
 		public:
@@ -198,7 +198,7 @@ namespace loglang{
 			std::string to_string(){
 				return to_string_("Expr_gte");
 			}
-			llvm::Value* compile() override;
+			llvm::Value* compile(CompileContext &context) override;
 		};
 		class Expr_eq : public Expr{
 		public:
@@ -209,7 +209,7 @@ namespace loglang{
 			std::string to_string(){
 				return to_string_("Expr_eq");
 			}
-			llvm::Value* compile() override;
+			llvm::Value* compile(CompileContext &context) override;
 		};
 		class Expr_neq : public Expr{
 		public:
@@ -220,7 +220,7 @@ namespace loglang{
 			std::string to_string(){
 				return to_string_("Expr_neq");
 			}
-			llvm::Value* compile() override;
+			llvm::Value* compile(CompileContext &context) override;
 		};
 		class Expr_add : public Expr{
 		public:
@@ -239,7 +239,7 @@ namespace loglang{
 			std::string to_string(){
 				return to_string_("Expr_add");
 			}
-			llvm::Value* compile() override;
+			llvm::Value* compile(CompileContext &context) override;
 		};
 		class Expr_sub : public Expr{
 		public:
@@ -256,7 +256,7 @@ namespace loglang{
 			std::string to_string(){
 				return to_string_("Expr_sub");
 			}
-			llvm::Value* compile() override;
+			llvm::Value* compile(CompileContext &context) override;
 		};
 		class Expr_and : public Expr{
 		public:
@@ -269,7 +269,7 @@ namespace loglang{
 			std::string to_string(){
 				return to_string_("Expr_and");
 			}
-			llvm::Value* compile() override;
+			llvm::Value* compile(CompileContext &context) override;
 		};
 		class Expr_or : public Expr{
 		public:
@@ -282,7 +282,7 @@ namespace loglang{
 			std::string to_string(){
 				return to_string_("Expr_and");
 			}
-			llvm::Value* compile() override;
+			llvm::Value* compile(CompileContext &context) override;
 		};
 		class Expr_Expr : public Expr{
 		public:
@@ -295,7 +295,7 @@ namespace loglang{
 			std::string to_string(){
 				return to_string_("Expr_Expr");
 			}
-			llvm::Value* compile() override;
+			llvm::Value* compile(CompileContext &context) override;
 		};
 		
 		class Edge_if : public Expr{
@@ -322,7 +322,7 @@ namespace loglang{
 			std::string to_string(){
 				return "<Edge_if "+cond->to_string()+" "+op1->to_string()+""+op2->to_string()+">";
 			}
-			llvm::Value* compile() override;
+			llvm::Value* compile(CompileContext &context) override;
 		};
 		class At : public Expr{
 		public:
@@ -344,7 +344,7 @@ namespace loglang{
 			std::string to_string(){
 				return to_string_("At");
 			}
-			llvm::Value* compile() override;
+			llvm::Value* compile(CompileContext &context) override;
 		};
 		class Function : public ASTBase{
 		public:
@@ -378,7 +378,7 @@ namespace loglang{
 				
 				return "<Function "+fnname+" {"+params_str+"}>";
 			}
-			llvm::Value* compile() override;
+			llvm::Value* compile(CompileContext &context) override;
 		};
 	}
 };

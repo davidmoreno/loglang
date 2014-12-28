@@ -61,7 +61,7 @@ void Context::feed_secure(std::string data)
 			auto value=data.substr(colonpos+1);
 			std::shared_ptr<Program> prog;
 			try{
-				prog=std::make_shared<Program>(key, std::move(value));
+				prog=std::make_shared<Program>(key, std::move(value), *this);
 			}
 			catch(std::exception &excp){
 				std::cerr<<"Error compiling: "<<excp.what()<<std::endl;

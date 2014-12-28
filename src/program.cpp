@@ -24,11 +24,11 @@
 using namespace loglang;
 
 
-Program::Program(std::string _name, std::string _sourcecode) : name(std::move(_name)), sourcecode(std::move(_sourcecode)), jit(nullptr)
+Program::Program(std::string _name, std::string _sourcecode, Context &context) : name(std::move(_name)), sourcecode(std::move(_sourcecode)), jit(nullptr)
 {
 	auto ast=parse_program(sourcecode);
 	_dependencies=ast->dependencies();
-	jit=new JITProgram(name, ast);
+	jit=new JITProgram(name, ast, context);
 // 	std::cerr<<name<<std::endl;
 // 	std::cerr<<"deps "<<std::to_string(_dependencies)<<std::endl;
 // 	std::cerr<<"Compile: "<<_sourcecode<<std::endl;

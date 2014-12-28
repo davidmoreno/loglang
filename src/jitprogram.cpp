@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include <iostream>
+#include <stack>
 
 #include <llvm/ExecutionEngine/JIT.h>
 #include <llvm/IR/LLVMContext.h>
@@ -25,6 +26,7 @@
 #include <llvm/IR/IRBuilder.h>
 
 #include "ast.hpp"
+#include "context.hpp"
 #include "ast_all.hpp"
 #include "jitprogram.hpp"
 
@@ -46,17 +48,33 @@ namespace loglang {
 		};
 		
 		GlobalContext context; // Global LLVM context
-		
 	}
+	class CompileContext{
+	public:
+		std::stack<llvm::BasicBlock*> stack;
+		Context &context; // Loglng context, for globals.
+		
+		CompileContext(llvm::BasicBlock *bblock, Context &_context) : context(_context){
+			stack.push(bblock);
+		}
+		
+		llvm::BasicBlock *currentBlock(){
+			return stack.top();
+		}
+	};
 }
 
-JITProgram::JITProgram(const std::string &program_name, const AST& root_node){
-	llvm::Value *root=root_node->compile();
+JITProgram::JITProgram(const std::string &program_name, const AST& root_node, Context &ctx){
 
 	llvm::FunctionType *FT = llvm::FunctionType::get(llvm::Type::getVoidTy(llvm::getGlobalContext()), false);	
 	llvm_function=llvm::Function::Create(FT, llvm::Function::ExternalLinkage, program_name, compile::context.module);
 
 	llvm::BasicBlock *bblock = llvm::BasicBlock::Create(llvm::getGlobalContext(), "entry", llvm_function);
+
+	CompileContext cc(bblock, ctx);
+
+	llvm::Value *root=root_node->compile(cc);
+	
 	llvm::ReturnInst::Create(llvm::getGlobalContext(), nullptr, bblock);
 
 	showCode();
@@ -87,64 +105,70 @@ void JITProgram::run(){
 
 namespace loglang{
 namespace ast{
-	llvm::Value *Equal::compile(){
+	llvm::Value *Equal::compile(CompileContext &context){
+		//return new StoreInst(rhs, lhs, false, context.getCurrentBlock());;
 		return nullptr;
 	}
-	llvm::Value *Edge_if::compile(){
+	llvm::Value *Edge_if::compile(CompileContext &context){
 		return nullptr;
 	}
-	llvm::Value *Value_var::compile(){
+	llvm::Value *Value_var::compile(CompileContext &context){
+		return context.context.get_value(var).llvm_value(compile::context.module);
+	}
+	llvm::Value *Value_const::compile(CompileContext &context){
+		llvm::Type *typ;
+		if (val->type_name=="double")
+			return llvm::ConstantFP::get(llvm::Type::getDoubleTy(llvm::getGlobalContext()), val->to_double());
+		if (val->type_name=="int")
+			return llvm::ConstantFP::get(llvm::Type::getInt64PtrTy(llvm::getGlobalContext()), val->to_int());
+		throw std::runtime_error("There is no support for this type yet.");
+	}
+	llvm::Value *Function::compile(CompileContext &context){
 		return nullptr;
 	}
-	llvm::Value *Value_const::compile(){
+	llvm::Value *Expr_div::compile(CompileContext &context){
 		return nullptr;
 	}
-	llvm::Value *Function::compile(){
+	llvm::Value *Expr_mul::compile(CompileContext &context){
 		return nullptr;
 	}
-	llvm::Value *Expr_div::compile(){
+	llvm::Value *Expr_add::compile(CompileContext &context){
 		return nullptr;
 	}
-	llvm::Value *Expr_mul::compile(){
+	llvm::Value *Expr_sub::compile(CompileContext &context){
 		return nullptr;
 	}
-	llvm::Value *Expr_add::compile(){
+	llvm::Value *At::compile(CompileContext &context){
 		return nullptr;
 	}
-	llvm::Value *Expr_sub::compile(){
+	llvm::Value *Value_glob::compile(CompileContext &context){
 		return nullptr;
 	}
-	llvm::Value *At::compile(){
+	llvm::Value *Expr_eq::compile(CompileContext &context){
+		return llvm::CmpInst::Create(llvm::Instruction::FCmp, llvm::CmpInst::ICMP_EQ, op1->compile(context), op2->compile(context), "", context.currentBlock());
+	}
+	llvm::Value *Expr_neq::compile(CompileContext &context){
 		return nullptr;
 	}
-	llvm::Value *Value_glob::compile(){
+	llvm::Value *Expr_lt::compile(CompileContext &context){
 		return nullptr;
 	}
-	llvm::Value *Expr_eq::compile(){
+	llvm::Value *Expr_lte::compile(CompileContext &context){
 		return nullptr;
 	}
-	llvm::Value *Expr_neq::compile(){
+	llvm::Value *Expr_gt::compile(CompileContext &context){
 		return nullptr;
 	}
-	llvm::Value *Expr_lt::compile(){
+	llvm::Value *Expr_gte::compile(CompileContext &context){
 		return nullptr;
 	}
-	llvm::Value *Expr_lte::compile(){
+	llvm::Value *Expr_or::compile(CompileContext &context){
 		return nullptr;
 	}
-	llvm::Value *Expr_gt::compile(){
+	llvm::Value *Expr_and::compile(CompileContext &context){
 		return nullptr;
 	}
-	llvm::Value *Expr_gte::compile(){
-		return nullptr;
-	}
-	llvm::Value *Expr_or::compile(){
-		return nullptr;
-	}
-	llvm::Value *Expr_and::compile(){
-		return nullptr;
-	}
-	llvm::Value *Expr_Expr::compile(){
+	llvm::Value *Expr_Expr::compile(CompileContext &context){
 		return nullptr;
 	}
 

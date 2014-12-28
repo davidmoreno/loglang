@@ -22,10 +22,12 @@ namespace llvm{
 }
 
 namespace loglang{
+	class Context; 
+	
 	class JITProgram{
 		llvm::Function *llvm_function;
 	public:
-		JITProgram(const std::string &program_name, const AST &root_node);
+		JITProgram(const std::string &program_name, const AST &root_node, Context &ctx);
 		~JITProgram();
 		
 		void showCode();

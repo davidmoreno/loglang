@@ -32,7 +32,7 @@ namespace loglang{
 		JITProgram *jit;
 		
 	public:
-		Program(std::string name, std::string sourcecode);
+		Program(std::string name, std::string sourcecode, Context &context);
 		~Program();
 		const std::set<std::string> &dependencies() const { return _dependencies; }
 		

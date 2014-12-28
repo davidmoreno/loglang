@@ -27,13 +27,15 @@ namespace llvm{
 
 namespace loglang{
 	class Context;
+	class CompileContext;
+	
 	class ASTBase{
 	public:
 		virtual ~ASTBase(){}
 		virtual any eval(Context &context) = 0;
 		virtual std::string to_string() = 0;
 		virtual std::set<std::string> dependencies() = 0;
-		virtual llvm::Value *compile() = 0;
+		virtual llvm::Value *compile(CompileContext &context) = 0;
 	};
 	
 	using AST=std::unique_ptr<ASTBase>;

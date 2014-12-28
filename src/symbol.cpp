@@ -14,7 +14,14 @@
  * limitations under the License.
  */
 
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/GlobalValue.h>
+#include <llvm/IR/GlobalVariable.h>
+#include <llvm/IR/Module.h>
+
 #include <algorithm>
+#include <iostream>
 
 #include "symbol.hpp"
 #include "program.hpp"
@@ -54,4 +61,26 @@ void Symbol::set(any new_val, Context &context)
 	context.get_value("%").set(to_any(_name), context);
 	for(auto program: at_modify)
 		program->run(context);
+}
+
+llvm::Value* Symbol::llvm_value(llvm::Module *module)
+{
+	if (!llvm_val){
+		llvm::Type *type=nullptr;
+		if (val->type_name=="double")
+			type=llvm::Type::getDoubleTy(llvm::getGlobalContext());
+		else if (val->type_name=="int")
+			type=llvm::Type::getInt64PtrTy(llvm::getGlobalContext());
+		else
+			throw std::runtime_error("There is no support for this type yet.");
+
+		module->getOrInsertGlobal(_name, type);
+		llvm::GlobalVariable *var=module->getGlobalVariable(_name);
+		var->setLinkage(llvm::GlobalValue::CommonLinkage);
+		var->setAlignment(4);
+
+		llvm_val=var;
+	}
+	std::cout<<"Get llvm var for "<<_name<<":"<<val->type_name<<" "<<llvm_val<<std::endl;
+	return llvm_val;
 }

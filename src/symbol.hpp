@@ -23,6 +23,11 @@
 
 #include "value.hpp"
 
+namespace llvm{
+	class Value;
+	class Module;
+}
+
 namespace loglang{
 	class Program;
 	class Context;
@@ -31,10 +36,12 @@ namespace loglang{
 		std::vector<std::shared_ptr<Program>> at_modify;
 		loglang::any val;
 		std::string _name;
+		llvm::Value *llvm_val;
 	public:
 		Symbol(std::string name);
 		void run_at_modify(std::shared_ptr<Program> at_modify);
 		void remove_program(std::shared_ptr<Program> at_modify);
+		llvm::Value *llvm_value(llvm::Module *module);
 		
 		const std::string &name(){ return _name; }
 		void set(any str, Context &context);
