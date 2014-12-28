@@ -90,6 +90,17 @@ namespace loglang{
 			return val!=o->to_bool();
 		}
 	};
+	class _ref : public value_base{
+		any *val;
+	public:
+		_ref(any *d) : value_base("ref"), val(d) {}
+		std::unique_ptr< value_base > clone() const override{
+			return to_any(val);
+		}
+		int cmp(const any &o) const{
+			return -o->cmp( *val );
+		}
+	};
 	class _dict : public value_base{
 		std::unordered_map<std::string, any> val;
 	public:
@@ -259,10 +270,14 @@ any loglang::to_any(int64_t val){
 any loglang::to_any(bool val){
 	return std::make_unique<_bool>(val);
 }
+
 any loglang::to_any(std::vector<any> val){
 	return std::make_unique<_list>(std::move(val));
 }
 
+any loglang::to_any(any *ref){
+	return std::make_unique<_ref>(ref);
+}
 
 namespace loglang{
 	bool operator==(const any &a, const any &b){

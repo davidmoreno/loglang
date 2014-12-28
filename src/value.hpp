@@ -82,6 +82,7 @@ namespace loglang{
 	class _bool;
 	class _list;
 	class _dict;
+	class _ref;
 	
 	
 	any to_any(std::string str);
@@ -90,6 +91,7 @@ namespace loglang{
 	any to_any(bool val);
 	any to_any(std::vector<any> vec);
 	any to_any(std::unordered_map<std::string, any> vec);
+	any to_any(any *ref);
 	
 	bool operator==(const any &, const any &);
 };
