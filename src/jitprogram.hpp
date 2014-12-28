@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 David Moreno
+ * Copyright 2014-2015 David Moreno
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,27 +14,20 @@
  * limitations under the License.
  */
 
-#pragma once
-
 #include <string>
-#include <set>
-
-#include "value.hpp"
+#include "ast.hpp"
 
 namespace llvm{
-	class Value;
+	class Function;
 }
 
 namespace loglang{
-	class Context;
-	class ASTBase{
+	class JITProgram{
+		llvm::Function *llvm_function;
 	public:
-		virtual ~ASTBase(){}
-		virtual any eval(Context &context) = 0;
-		virtual std::string to_string() = 0;
-		virtual std::set<std::string> dependencies() = 0;
-		virtual llvm::Value *compile() = 0;
+		JITProgram(const std::string &program_name, const AST &root_node);
+		~JITProgram();
+		
+		void run(any &);
 	};
-	
-	using AST=std::unique_ptr<ASTBase>;
-}
+};
