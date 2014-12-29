@@ -29,7 +29,7 @@
 
 using namespace loglang;
 
-Symbol::Symbol(std::string name) : _name(std::move(name))
+Symbol::Symbol(std::string name) : _name(std::move(name)), llvm_val(nullptr)
 {
 
 }
@@ -78,9 +78,11 @@ llvm::Value* Symbol::llvm_value(llvm::Module *module)
 		llvm::GlobalVariable *var=module->getGlobalVariable(_name);
 		var->setLinkage(llvm::GlobalValue::CommonLinkage);
 		var->setAlignment(4);
+		llvm::Constant* const_val = llvm::ConstantInt::get(module->getContext(), llvm::APInt(32,val->to_int()));
+		var->setInitializer(const_val);
 
 		llvm_val=var;
 	}
-	std::cout<<"Get llvm var for "<<_name<<":"<<val->type_name<<" "<<llvm_val<<std::endl;
+	std::cout<<"Get llvm var for "<<_name<<":"<<val->type_name<<" "<<llvm_val<<" "<<std::to_string(val)<<std::endl;
 	return llvm_val;
 }
