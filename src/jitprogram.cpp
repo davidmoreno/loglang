@@ -119,7 +119,7 @@ JITProgram::JITProgram(const std::string &program_name, const AST& root_node, Co
 	
 	llvm::ReturnInst::Create(llvm::getGlobalContext(), nullptr, bblock);
 
-// 	showCode();
+	showCode();
 }
 
 JITProgram::~JITProgram()
@@ -178,7 +178,7 @@ namespace ast{
 		throw compile_error("Not yet edge_if");
 	}
 	llvm::Value *Value_var::compile(CompileContext &context){
-		return context.context.get_value(var).llvm_value();
+		return new llvm::LoadInst(context.context.get_value(var).llvm_value(), "", false, context.currentBlock());
 	}
 	llvm::Value *Value_const::compile(CompileContext &context){
 // 		std::cerr<<"Type  "<<val->type_name<<std::endl;
@@ -192,16 +192,24 @@ namespace ast{
 		throw compile_error("Not yet Function");
 	}
 	llvm::Value *Expr_div::compile(CompileContext &context){
-		throw compile_error("Not yet Div");
+		llvm::Value *a=op1->compile(context);
+		llvm::Value *b=op2->compile(context);
+		return llvm::BinaryOperator::Create(llvm::Instruction::FDiv, a, b, "", context.currentBlock());
 	}
 	llvm::Value *Expr_mul::compile(CompileContext &context){
-		throw compile_error("Not yet Mul");
+		llvm::Value *a=op1->compile(context);
+		llvm::Value *b=op2->compile(context);
+		return llvm::BinaryOperator::Create(llvm::Instruction::FMul, a, b, "", context.currentBlock());
 	}
 	llvm::Value *Expr_add::compile(CompileContext &context){
-		throw compile_error("Not yet Add");
+		llvm::Value *a=op1->compile(context);
+		llvm::Value *b=op2->compile(context);
+		return llvm::BinaryOperator::Create(llvm::Instruction::FAdd, a, b, "", context.currentBlock());
 	}
 	llvm::Value *Expr_sub::compile(CompileContext &context){
-		throw compile_error("Not yet Sub");
+		llvm::Value *a=op1->compile(context);
+		llvm::Value *b=op2->compile(context);
+		return llvm::BinaryOperator::Create(llvm::Instruction::FSub, a, b, "", context.currentBlock());
 	}
 	llvm::Value *At::compile(CompileContext &context){
 		throw compile_error("Not yet At");
