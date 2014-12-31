@@ -26,11 +26,11 @@
 
 namespace loglang{
 	namespace ast{
-		class Equal : public ASTBase{
+		class Assign : public ASTBase{
 			std::string var;
 			AST op2;
 		public:
-			Equal(std::string var, AST op2) : var(var), op2(std::move(op2)){}
+			Assign(std::string var, AST op2) : var(var), op2(std::move(op2)){}
 			any eval(Context &context){
 				auto op2_res=op2->eval(context);
 				context.get_value(var).set(op2_res->clone(), context);
@@ -40,7 +40,7 @@ namespace loglang{
 				return op2->dependencies();
 			}
 			std::string to_string(){
-				return "<Equal "+var+" "+op2->to_string()+">";
+				return "<Assign "+var+" "+op2->to_string()+">";
 			};
 			llvm::Value* compile(CompileContext &context) override;
 		};

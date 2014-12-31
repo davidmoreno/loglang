@@ -24,6 +24,11 @@ namespace llvm{
 namespace loglang{
 	class Context; 
 	
+	class compile_error : public std::runtime_error{
+	public:
+		compile_error(const std::string& __arg) : runtime_error(__arg){}
+	};
+	
 	class JITProgram{
 		llvm::Function *llvm_function;
 	public:

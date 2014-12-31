@@ -105,12 +105,12 @@ void JITProgram::run(){
 
 namespace loglang{
 namespace ast{
-	llvm::Value *Equal::compile(CompileContext &context){
+	llvm::Value *Assign::compile(CompileContext &context){
 		//return new StoreInst(rhs, lhs, false, context.getCurrentBlock());;
-		return nullptr;
+		throw compile_error("Not yet Assign");
 	}
 	llvm::Value *Edge_if::compile(CompileContext &context){
-		return nullptr;
+		throw compile_error("Not yet edge_if");
 	}
 	llvm::Value *Value_var::compile(CompileContext &context){
 		return context.context.get_value(var).llvm_value(compile::context.module);
@@ -124,52 +124,53 @@ namespace ast{
 		throw std::runtime_error("There is no support for this type yet.");
 	}
 	llvm::Value *Function::compile(CompileContext &context){
-		return nullptr;
+		throw compile_error("Not yet Function");
 	}
 	llvm::Value *Expr_div::compile(CompileContext &context){
-		return nullptr;
+		throw compile_error("Not yet Div");
 	}
 	llvm::Value *Expr_mul::compile(CompileContext &context){
-		return nullptr;
+		throw compile_error("Not yet Mul");
 	}
 	llvm::Value *Expr_add::compile(CompileContext &context){
-		return nullptr;
+		throw compile_error("Not yet Add");
 	}
 	llvm::Value *Expr_sub::compile(CompileContext &context){
-		return nullptr;
+		throw compile_error("Not yet Sub");
 	}
 	llvm::Value *At::compile(CompileContext &context){
-		return nullptr;
+		throw compile_error("Not yet At");
 	}
 	llvm::Value *Value_glob::compile(CompileContext &context){
-		return nullptr;
+		throw compile_error("Not yet Val glob");
 	}
 	llvm::Value *Expr_eq::compile(CompileContext &context){
 		return llvm::CmpInst::Create(llvm::Instruction::FCmp, llvm::CmpInst::ICMP_EQ, op1->compile(context), op2->compile(context), "", context.currentBlock());
 	}
 	llvm::Value *Expr_neq::compile(CompileContext &context){
-		return nullptr;
+		throw compile_error("Not yet neq");
 	}
 	llvm::Value *Expr_lt::compile(CompileContext &context){
-		return nullptr;
+		throw compile_error("Not yet lt");
 	}
 	llvm::Value *Expr_lte::compile(CompileContext &context){
-		return nullptr;
+		throw compile_error("Not yet lte");
 	}
 	llvm::Value *Expr_gt::compile(CompileContext &context){
-		return nullptr;
+		throw compile_error("Not yet gt");
 	}
 	llvm::Value *Expr_gte::compile(CompileContext &context){
-		return nullptr;
+		throw compile_error("Not yet gte");
 	}
 	llvm::Value *Expr_or::compile(CompileContext &context){
-		return nullptr;
+		throw compile_error("Not yet or");
 	}
 	llvm::Value *Expr_and::compile(CompileContext &context){
-		return nullptr;
+		throw compile_error("Not yet and");
 	}
 	llvm::Value *Expr_Expr::compile(CompileContext &context){
-		return nullptr;
+		op1->compile(context);
+		return op2->compile(context);
 	}
 
 }
