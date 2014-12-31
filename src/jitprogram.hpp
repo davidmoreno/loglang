@@ -19,6 +19,9 @@
 
 namespace llvm{
 	class Function;
+	class Module;
+	class ExecutionEngine;
+	class Function;
 }
 
 namespace loglang{
@@ -27,6 +30,19 @@ namespace loglang{
 	class compile_error : public std::runtime_error{
 	public:
 		compile_error(const std::string& __arg) : runtime_error(__arg){}
+	};
+
+	namespace jit{
+		class RuntimeContext{
+		public:
+			llvm::Module *module;
+			llvm::ExecutionEngine *jit;
+			llvm::Function* set_val_f;
+
+			RuntimeContext();
+		};
+		
+		extern RuntimeContext context; // Global LLVM context
 	};
 	
 	class JITProgram{

@@ -94,7 +94,13 @@ void Context::feed(std::string data){
 	auto spacepos=data.find_first_of(' ');
 	auto key=data.substr(0, spacepos);
 	auto value=data.substr(spacepos+1);
-	get_value(key).set(to_any(int64_t(to_number(value))), *this);
+	any val;
+	if (std::find(std::begin(value), std::end(value),'.')==std::end(value))
+		val=std::move( to_any(int64_t(to_number(value)) ));
+	else
+		val=std::move( to_any(to_number(value) ));
+	
+	get_value(key).set(std::move(val), *this);
 }
 
 

@@ -26,10 +26,11 @@
 #include "symbol.hpp"
 #include "program.hpp"
 #include "context.hpp"
+#include "jitprogram.hpp"
 
 using namespace loglang;
 
-Symbol::Symbol(std::string name) : _name(std::move(name)), llvm_val(nullptr)
+Symbol::Symbol(std::string name) : _name(std::move(name)), llvm_val(nullptr), llvm_val_name(nullptr)
 {
 
 }
@@ -63,26 +64,47 @@ void Symbol::set(any new_val, Context &context)
 		program->run(context);
 }
 
-llvm::Value* Symbol::llvm_value(llvm::Module *module)
+llvm::Value* Symbol::llvm_value()
 {
 	if (!llvm_val){
+		llvm::Module *module=jit::context.module;
+		llvm::Constant* const_val=nullptr;
 		llvm::Type *type=nullptr;
-		if (val->type_name=="double")
+		if (val->type_name=="double"){
 			type=llvm::Type::getDoubleTy(llvm::getGlobalContext());
-		else if (val->type_name=="int")
+			const_val=llvm::ConstantFP::get(module->getContext(), llvm::APFloat(val->to_double()));
+		}
+		else if (val->type_name=="int"){
 			type=llvm::Type::getInt64PtrTy(llvm::getGlobalContext());
+			const_val=llvm::ConstantInt::get(module->getContext(), llvm::APInt(32,val->to_int()));
+		}
 		else
 			throw std::runtime_error("There is no support for this type yet.");
 
 		module->getOrInsertGlobal(_name, type);
 		llvm::GlobalVariable *var=module->getGlobalVariable(_name);
 		var->setLinkage(llvm::GlobalValue::CommonLinkage);
-		var->setAlignment(4);
-		llvm::Constant* const_val = llvm::ConstantInt::get(module->getContext(), llvm::APInt(32,val->to_int()));
+// 		var->setAlignment(4);
 		var->setInitializer(const_val);
 
 		llvm_val=var;
 	}
-	std::cout<<"Get llvm var for "<<_name<<":"<<val->type_name<<" "<<llvm_val<<" "<<std::to_string(val)<<std::endl;
+// 	std::cout<<"Get llvm var for "<<_name<<":"<<val->type_name<<" "<<llvm_val<<" "<<std::to_string(val)<<std::endl;
 	return llvm_val;
+}
+
+llvm::Value* Symbol::llvm_value_name(){
+	if (!llvm_val_name){
+		llvm::Module *module=jit::context.module;
+		llvm::Type *type=llvm::ArrayType::get(llvm::IntegerType::get(module->getContext(), 8), 2);
+		auto vn=std::string("__")+_name+std::string("_name__");
+		module->getOrInsertGlobal(vn, type);
+		llvm::GlobalVariable *var=module->getGlobalVariable(vn);
+		var->setLinkage(llvm::GlobalValue::InternalLinkage);
+// 		var->setAlignment(4);
+		var->setInitializer(llvm::ConstantDataArray::getString(module->getContext(), _name.c_str(), true));
+
+		llvm_val_name=var;
+	}
+	return llvm_val_name;
 }
