@@ -1,26 +1,10 @@
 # Log Lang
 
-Its a rule based programming language. If the dependencies change, then the rules are executed, which in turn can execute another rule.
+Its a rule based programming language. If the dependencies change, then the rules are executed, which 
+in turn can execute another rule.
 
-Data and code goes thought the same input, which may be a security problem.
-
-# Outdated Pseudo BNF
-
-	Program -> []
-	[OP] -> + - / * < > <= >= == in and or
-	[] -> var = []
-	[] -> [] [OP] []
-	[] -> if [] then [] else []
-	[] -> edge_if [] then [] else []
-	[] -> at [] do []
-	[] -> [const]
-	[] -> [var]
-	[] -> '[' [] ']'  # construct variable at runtime, for example to create new ones or access runtime defined ones.
-	[] -> '[' (([],)* []|) ']' # list
-	[] -> { (([];)* []|) } # block, returns last value
-	[] -> [func]( (([],)* []|) ) 
-	[func] -> sum | print | ...
-
+Data and code goes thought the same input on unsafe channels, which may be a security problem. Stdin 
+is always a safe channel and can contain only data.
 
 Some remarks:
 

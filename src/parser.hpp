@@ -18,6 +18,7 @@
 #pragma once
 
 #include "ast.hpp"
+#include "tokenizer.hpp"
 
 namespace loglang{
 	class parsing_exception : public std::exception{
@@ -29,10 +30,12 @@ namespace loglang{
 	class unexpected_token_type : public parsing_exception{
 	public:
 		unexpected_token_type(std::string s) : parsing_exception(s){};
+		unexpected_token_type(const Token &t) : parsing_exception(std::string("Unexpected token type: ")+std::to_string(t)){};
 	};
 	class unexpected_token : public parsing_exception{
 	public:
 		unexpected_token(std::string s) : parsing_exception(s){};
+		unexpected_token(const Token &t) : parsing_exception(std::string("Unexpected token: ")+std::to_string(t)){};
 	};
 	class semantic_exception  :public parsing_exception{
 	public:
@@ -40,5 +43,5 @@ namespace loglang{
 	};
 	
 	
-	AST parse_program(const std::string sourcecode);
+	AST parse_program(const std::string &sourcecode);
 }

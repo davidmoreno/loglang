@@ -241,9 +241,11 @@ namespace ast{
 	llvm::Value *Expr_and::compile(CompileContext &context){
 		throw compile_error("Not yet and");
 	}
-	llvm::Value *Expr_Expr::compile(CompileContext &context){
-		op1->compile(context);
-		return op2->compile(context);
+	llvm::Value *Block::compile(CompileContext &context){
+		llvm::Value *ret=NULL;
+		for(auto &st: stmts)
+			ret=st->compile(context);
+		return ret;
 	}
 
 }

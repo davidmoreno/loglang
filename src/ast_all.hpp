@@ -284,16 +284,32 @@ namespace loglang{
 			}
 			llvm::Value* compile(CompileContext &context) override;
 		};
-		class Expr_Expr : public Expr{
+		class Block : public ASTBase{
 		public:
-			Expr_Expr(AST op1, AST op2) : Expr(std::move(op1), std::move(op2)) {}
+			std::vector<AST> stmts;
+			Block() {}
 			any eval(Context &context){
-				op1->eval(context); // Eval but ignore expr1, return expr2
-				auto r2=op2->eval(context);
-				return r2;
+				any ret;
+				for(auto &st:stmts)
+					ret=std::move( st->eval(context) ); 
+				return ret;
 			}
 			std::string to_string(){
-				return to_string_("Expr_Expr");
+				std::stringstream ss;
+				ss<<"{ ";
+				for(auto &st: stmts){
+					ss<<st->to_string()<<"; ";
+				}
+				ss<<"}";
+				
+				return ss.str(); 
+			}
+			std::set< std::string > dependencies(){
+				std::set< std::string > res;
+				for(auto &st:stmts)
+					for(auto &s: st->dependencies())
+						res.insert(s);
+				return  res;
 			}
 			llvm::Value* compile(CompileContext &context) override;
 		};

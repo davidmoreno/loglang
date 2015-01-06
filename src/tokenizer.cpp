@@ -23,7 +23,7 @@
 
 using namespace loglang;
 
-static std::string ops="*/+-%=<>!;";
+static std::string ops="*/+-%=<>!";
 static std::string ops2letter_1="><=!";
 // static std::string ops2letter_2="="; // Just one option, better simple =
 
@@ -58,6 +58,8 @@ Token Tokenizer::real_next()
 		return Token(*pos++, Token::OPEN_CURLY);
 	else if (*pos=='}')
 		return Token(*pos++, Token::CLOSE_CURLY);
+	else if (*pos==';')
+		return Token(*pos++, Token::COLON);
 	else if (std::find(std::begin(ops), std::end(ops), *pos)!=std::end(ops)){
 		auto c=*pos++;
 		auto tok=Token(c, Token::OP);
@@ -110,7 +112,7 @@ Token Tokenizer::real_next()
 	return Token(std::move(str), type);
 }
 
-Token Tokenizer::next()
+Token &Tokenizer::next()
 {
 	if (_rewind){
 		_rewind=false;
@@ -126,9 +128,14 @@ void Tokenizer::rewind(){
 	_rewind=true;
 }
 
+Token &Tokenizer::current()
+{
+	return last_token;
+}
+
 
 std::string Tokenizer::position_to_string(){
-	return std::string(std::begin(data), pos-(last_token.token.length()+1)) + "\033[01;31m"+last_token.token+"\033[0m" + std::string(pos, std::end(data));
+	return std::string(std::begin(data), pos-(last_token.token.length())) + "\033[01;31m"+last_token.token+"\033[0m" + std::string(pos, std::end(data));
 }
 
 std::string std::to_string(const Token& t){
