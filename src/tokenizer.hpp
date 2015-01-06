@@ -51,6 +51,7 @@ namespace loglang{
 			CLOSE_CURLY=15,
 			OPEN_BRACKET=16,
 			CLOSE_BRACKET=17,
+			COLON=18,
 			
 			INVALID=255
 		};
@@ -85,8 +86,9 @@ namespace loglang{
 	public:
 		Tokenizer(std::string str) : data(std::move(str)), pos(std::begin(data)){}
 		
-		Token next();
+		Token &next();
 		void rewind();
+		Token &current();
 		
 		std::string position_to_string();
 	};

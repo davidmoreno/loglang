@@ -26,69 +26,71 @@
 
 using namespace loglang;
 
-class ::loglang::RegexParserPrivate{
-public:
-	struct regex_cb{
-		pcre_extra *re_extra=nullptr;
-		pcre *re=nullptr;
-		pcre_jit_stack *jit_stack;
-		loglang::RegexParser::cb_t cb;
-		int namecount;
-		
-		regex_cb() = delete;
-		regex_cb& operator=(const regex_cb &o) = delete;
-		regex_cb(regex_cb &) = delete;
-		
-		regex_cb(const std::string &regex, loglang::RegexParser::cb_t _cb) : 
-			cb(_cb){
-				const char *error;
-				int erroroffset;
-				re=pcre_compile(regex.c_str(), 0, &error, &erroroffset, NULL);
-				if (!re){
-					throw loglang::parsing_exception("Cant parse the regex");
-				}
-				re_extra = pcre_study(re, PCRE_STUDY_JIT_COMPILE, &error);
-				if (!re_extra){
+namespace loglang{
+	class RegexParserPrivate{
+	public:
+		struct regex_cb{
+			pcre_extra *re_extra=nullptr;
+			pcre *re=nullptr;
+			pcre_jit_stack *jit_stack;
+			loglang::RegexParser::cb_t cb;
+			int namecount;
+			
+			regex_cb() = delete;
+			regex_cb& operator=(const regex_cb &o) = delete;
+			regex_cb(regex_cb &) = delete;
+			
+			regex_cb(const std::string &regex, loglang::RegexParser::cb_t _cb) : 
+				cb(_cb){
+					const char *error;
+					int erroroffset;
+					re=pcre_compile(regex.c_str(), 0, &error, &erroroffset, NULL);
+					if (!re){
+						throw loglang::parsing_exception("Cant parse the regex");
+					}
+					re_extra = pcre_study(re, PCRE_STUDY_JIT_COMPILE, &error);
+					if (!re_extra){
+						pcre_free(re);
+						re=nullptr;
+						throw loglang::parsing_exception("Cant parse the regex: cant crete JIT");
+					}
+					jit_stack = pcre_jit_stack_alloc(32*1024, 512*1024);
+					pcre_assign_jit_stack(re_extra, NULL, jit_stack);
+					
+					pcre_fullinfo(re, NULL, PCRE_INFO_NAMECOUNT, &namecount);
+			}
+			
+			regex_cb(regex_cb &&o){
+				if (re)
 					pcre_free(re);
-					re=nullptr;
-					throw loglang::parsing_exception("Cant parse the regex: cant crete JIT");
-				}
-				jit_stack = pcre_jit_stack_alloc(32*1024, 512*1024);
-				pcre_assign_jit_stack(re_extra, NULL, jit_stack);
-				
-				pcre_fullinfo(re, NULL, PCRE_INFO_NAMECOUNT, &namecount);
-		}
+				if (re_extra)
+					pcre_free_study(re_extra);
+				if (jit_stack)
+					pcre_jit_stack_free(jit_stack);
+				re_extra=o.re_extra;
+				re=o.re;
+				jit_stack=o.jit_stack;
+				cb=std::move(o.cb);
+				namecount=o.namecount;
+
+				o.re=nullptr;
+				o.re_extra=nullptr;
+				o.jit_stack=nullptr;
+			}
+
+			~regex_cb(){
+				if (re)
+					pcre_free(re);
+				if (re_extra)
+					pcre_free_study(re_extra);
+				if (jit_stack)
+					pcre_jit_stack_free(jit_stack);
+			}
+		};
 		
-		regex_cb(regex_cb &&o){
-			if (re)
-				pcre_free(re);
-			if (re_extra)
-				pcre_free_study(re_extra);
-			if (jit_stack)
-				pcre_jit_stack_free(jit_stack);
-			re_extra=o.re_extra;
-			re=o.re;
-			jit_stack=o.jit_stack;
-			cb=std::move(o.cb);
-			namecount=o.namecount;
-
-			o.re=nullptr;
-			o.re_extra=nullptr;
-			o.jit_stack=nullptr;
-		}
-
-		~regex_cb(){
-			if (re)
-				pcre_free(re);
-			if (re_extra)
-				pcre_free_study(re_extra);
-			if (jit_stack)
-				pcre_jit_stack_free(jit_stack);
-		}
+		std::vector<regex_cb> regex_list;
 	};
-	
-	std::vector<regex_cb> regex_list;
-};
+}
 
 RegexParser::RegexParser()
 {

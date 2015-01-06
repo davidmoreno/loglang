@@ -1,25 +1,10 @@
 # Log Lang
 
-Its a rule based programming language. If the dependencies change, then the rules are executed, which in turn can execute another rule.
+Its a rule based programming language. If the dependencies change, then the rules are executed, which 
+in turn can execute another rule.
 
-Data and code goes thought the same input, which may be a security problem.
-
-# Pseudo BNF
-
-	Program -> []
-	[OP] -> + - / * < > <= >= == in and or
-	[] -> var = []
-	[] -> [] [OP] []
-	[] -> if [] then [] else []
-	[] -> edge_if [] then [] else []
-	[] -> at [] do []
-	[] -> [const]
-	[] -> [var]
-	[] -> '[' (([],)* []|) ']' # list
-	[] -> { (([];)* []|) } # block, returns last value
-	[] -> [func]( (([],)* []|) ) 
-	[func] -> sum | print | ...
-
+Data and code goes thought the same input on unsafe channels, which may be a security problem. Stdin 
+is always a safe channel and can contain only data.
 
 Some remarks:
 
@@ -35,6 +20,13 @@ Some remarks:
 
 * sum( list )  -- Sum of the given list values
 * print( var ) -- Prints the name and value of the given 
+* round( double, int ) -- Rounds to n digits
+* to_int(any) -- converts to to_int
+* debug( list ) -- Shows a debug entry.
+
+## Safe and unsafe streams.
+
+There are safe streams that an have also code, regexes and data, and unsafe that only has data. stdin is unsafe. All others are unsafe.
 
 # Programs vs data
 

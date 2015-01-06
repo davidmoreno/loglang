@@ -26,11 +26,11 @@
 
 namespace loglang{
 	namespace ast{
-		class Equal : public ASTBase{
+		class Assign : public ASTBase{
 			std::string var;
 			AST op2;
 		public:
-			Equal(std::string var, AST op2) : var(var), op2(std::move(op2)){}
+			Assign(std::string var, AST op2) : var(var), op2(std::move(op2)){}
 			any eval(Context &context){
 				auto op2_res=op2->eval(context);
 				context.get_value(var).set(op2_res->clone(), context);
@@ -40,7 +40,7 @@ namespace loglang{
 				return op2->dependencies();
 			}
 			std::string to_string(){
-				return "<Equal "+var+" "+op2->to_string()+">";
+				return "<Assign "+var+" "+op2->to_string()+">";
 			};
 		};
 		class Value : public ASTBase{
@@ -92,6 +92,21 @@ namespace loglang{
 				return "<Value_val "+var+">";
 			};
 		};
+		class Value_lvar : public Value{
+		public:
+			AST op1;
+			Value_lvar(AST _op1) : op1(std::move(_op1)) {}
+			std::set<std::string> dependencies(){
+				return op1->dependencies();
+			}
+			std::string to_string(){
+				return "<Value_lvar "+op1->to_string()+">";
+			};
+			any eval(Context &context){
+				return op1->eval(context);
+			}
+		};
+
 		class Value_glob : public Value{
 		public:
 			std::string var;
@@ -268,16 +283,32 @@ namespace loglang{
 				return to_string_("Expr_and");
 			}
 		};
-		class Expr_Expr : public Expr{
+		class Block : public ASTBase{
 		public:
-			Expr_Expr(AST op1, AST op2) : Expr(std::move(op1), std::move(op2)) {}
+			std::vector<AST> stmts;
+			Block() {}
 			any eval(Context &context){
-				op1->eval(context); // Eval but ignore expr1, return expr2
-				auto r2=op2->eval(context);
-				return r2;
+				any ret;
+				for(auto &st:stmts)
+					ret=std::move( st->eval(context) ); 
+				return ret;
 			}
 			std::string to_string(){
-				return to_string_("Expr_Expr");
+				std::stringstream ss;
+				ss<<"{ ";
+				for(auto &st: stmts){
+					ss<<st->to_string()<<"; ";
+				}
+				ss<<"}";
+				
+				return ss.str(); 
+			}
+			std::set< std::string > dependencies(){
+				std::set< std::string > res;
+				for(auto &st:stmts)
+					for(auto &s: st->dependencies())
+						res.insert(s);
+				return  res;
 			}
 		};
 		
@@ -341,9 +372,9 @@ namespace loglang{
 				return std::string("<Indirect ")+ind->to_string()+">";
 			};
 		};
-		class LVEqual : public Expr{
+		class LVAssign : public Expr{
 		public:
-			LVEqual(AST _op1, AST _op2) : Expr(std::move(_op1),std::move(_op2)){}
+			LVAssign(AST _op1, AST _op2) : Expr(std::move(_op1),std::move(_op2)){}
 			any eval(Context &context){
 				auto op1_res=op1->eval(context);
 				auto op2_res=op2->eval(context);
@@ -354,7 +385,7 @@ namespace loglang{
 				return op2->dependencies();
 			}
 			std::string to_string(){
-				return "<LVEqual "+op1->to_string()+" "+op2->to_string()+">";
+				return "<LVAssign "+op1->to_string()+" "+op2->to_string()+">";
 			};
 		};
 
