@@ -29,7 +29,7 @@ namespace loglang{
 	
 	class Symbol{
 		std::vector<std::shared_ptr<Program>> at_modify;
-		loglang::any val;
+		loglang::value val;
 		std::string _name;
 	public:
 		Symbol(std::string name);
@@ -37,7 +37,7 @@ namespace loglang{
 		void remove_program(std::shared_ptr<Program> at_modify);
 		
 		const std::string &name(){ return _name; }
-		void set(any str, Context &context);
-		const loglang::any &get() const;
+		void set(value str, Context &context);
+		const loglang::value &get() const;
 	};
 }

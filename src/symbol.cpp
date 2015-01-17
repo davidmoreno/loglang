@@ -18,6 +18,7 @@
 
 #include "symbol.hpp"
 #include "program.hpp"
+#include "types.hpp"
 #include "context.hpp"
 
 using namespace loglang;
@@ -38,12 +39,12 @@ void Symbol::remove_program(std::shared_ptr< Program > _at_modify)
 	at_modify.erase( std::remove(std::begin(at_modify), std::end(at_modify), _at_modify), std::end(at_modify));
 }
 
-const loglang::any &Symbol::get() const
+const loglang::value &Symbol::get() const
 {
 	return val;
 }
 
-void Symbol::set(any new_val, Context &context)
+void Symbol::set(value new_val, Context &context)
 {
 	if (val==new_val) // Ignore no changes.
 		return; 
@@ -51,7 +52,7 @@ void Symbol::set(any new_val, Context &context)
 // 	context.output(name, value);
 	if (_name=="%") // Prevent recursion.
 		return;
-	context.get_value("%").set(to_any(_name), context);
+	context.get_value("%").set(to_value(_name), context);
 	for(auto program: at_modify)
 		program->run(context);
 }

@@ -23,11 +23,12 @@
 
 namespace loglang{
 	class value_base;
-	using any = std::unique_ptr<value_base>;
+	class type_base;
+	using value = std::unique_ptr<value_base>;
 }
 
 namespace std{
-	std::string to_string(const loglang::any &any);
+	std::string to_string(const loglang::value &any);
 	std::string to_string(const loglang::value_base *any);
 }
 
@@ -48,42 +49,11 @@ namespace loglang{
 			}
 		};
 	public:
-		const std::string type_name;
+		type_base *type;
 		
-		value_base(std::string _type_name) : type_name(std::move(_type_name)) {} 
+		value_base(type_base *t) : type(t) {} 
 		virtual ~value_base(){}
 		
-		virtual any clone() const = 0;
-		virtual int cmp(const any &) const = 0;
-		
-		virtual int64_t to_int() const{
-			throw invalid_conversion("int", this);
-		}
-		virtual double to_double() const{
-			throw invalid_conversion("double", this);
-		}
-		virtual const std::string &to_string() const{
-			throw invalid_conversion("string", this);
-		}
-		virtual bool to_bool() const{
-			throw invalid_conversion("bool", this);
-		}
-		virtual const std::vector<any> &to_list() const{
-			throw invalid_conversion("list", this);
-		}
+		virtual value clone() const = 0;
 	};
-	class string;
-	class _int;
-	class _double;
-	class _bool;
-	class _list;
-	
-	
-	any to_any(std::string str);
-	any to_any(double val);
-	any to_any(int64_t val);
-	any to_any(bool val);
-	any to_any(std::vector<any> vec);
-	
-	bool operator==(const any &, const any &);
 };

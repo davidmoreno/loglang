@@ -70,5 +70,7 @@ namespace loglang{
 	double to_number(const std::string &str);
 	void trim(std::string &);
 	void clean(std::string &);
+	
+	std::set< std::string > operator+(std::set< std::string > s1, const std::set< std::string > &s2);
 };
 

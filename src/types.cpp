@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 David Moreno
+ * Copyright 2014-2015 David Moreno
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-#pragma once
+#include "types.hpp"
 
-#include <string>
-#include <set>
 
-#include "value.hpp"
+using namespace loglang;
 
-namespace loglang{
-	class Context;
-	class type_base;
-	class ASTBase{
-	public:
-		type_base *type=nullptr;
-		virtual ~ASTBase(){}
-		virtual value eval(Context &context) = 0;
-		virtual std::string to_string() = 0;
-		virtual std::set<std::string> dependencies() = 0;
-	};
-	
-	using AST=std::unique_ptr<ASTBase>;
+std::unordered_map<type_base::type_id, type,  std::hash<int>> type_base::types;
+
+
+type_base::type_base(type_base::type_id t){
+	type_base::types[t]=this;
 }
+
+
+type type_base::get(type_base::type_id tid)
+{
+	auto r=types.find(tid);
+	if (r==std::end(types))
+		throw std::runtime_error("Unknown type");
+	return r->second;
+}
+

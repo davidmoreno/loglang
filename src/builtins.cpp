@@ -17,46 +17,46 @@
 #include <iostream>
 #include <math.h>
 
+#include "types.hpp"
 #include "builtins.hpp"
 #include "context.hpp"
+#include "types/int.hpp"
+#include "types/string.hpp"
+#include "types/double.hpp"
+#include "types/list.hpp"
 
 namespace loglang{
 	namespace builtins{
-		static any sum(Context&, const std::vector<any> &vars){
+		static value sum(Context&, const std::vector<value> &vars){
 			double n=0.0;
 			for(auto &v: vars){
-				try{
-					auto &operands=v->to_list();
-					for (auto &op: operands)
-						n+=op->to_double();
-				}
-				catch(const value_base::invalid_conversion &e){
-					n+=v->to_double();
-				}
+				auto operands=list_type.to_list(v);
+				for (auto &op: operands)
+					n+= double_type.to_double(op);
 			}
-			return to_any( n );
+			return to_value( n );
 		}
-		static any print(Context &context, const std::vector<any> &vars){
-			auto symlist=context.symboltable_filter(vars[0]->to_string());
+		static value print(Context &context, const std::vector<value> &vars){
+			auto symlist=context.symboltable_filter( string_type.to_string( vars[0] ));
 			for (auto sym: symlist){
 				context.output(sym->name(), std::to_string( sym->get() ));
 			}
-			return to_any( (int64_t)vars.size() );
+			return to_value( (int64_t)vars.size() );
 		}
-		static any round(Context &context, const std::vector<any> &vars){
-			auto dataitem=vars[0]->to_double();
-			auto ndig=vars[1]->to_double();
+		static value round(Context &context, const std::vector<value> &vars){
+			auto dataitem=double_type.to_double( vars[0] );
+			auto ndig=double_type.to_double( vars[1] );
 			double mult=pow(10, ndig);
 	// 		std::cerr<<dataitem<<" "<<mult<<std::endl;
-			return to_any( int( dataitem * mult ) / mult );
+			return to_value( int( dataitem * mult ) / mult );
 		}
 
-		static any debug(Context &context, const std::vector<any> &vars){
+		static value debug(Context &context, const std::vector<value> &vars){
 			std::cerr<<"DEBUG: ";
 			for(auto &v: vars)
-				std::cerr<<std::to_string(v)<<" ";
+				std::cerr<<string_type.to_string( v )<<" ";
 			std::cerr<<std::endl;
-			return to_any( true );
+			return to_value( true );
 		}
 		
 	}

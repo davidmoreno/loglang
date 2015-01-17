@@ -22,6 +22,7 @@
 #include "context.hpp"
 #include "program.hpp"
 #include "glob.hpp"
+#include "types.hpp"
 #include "utils.hpp"
 #include "builtins.hpp"
 
@@ -94,7 +95,7 @@ void Context::feed(std::string data){
 	auto spacepos=data.find_first_of(' ');
 	auto key=data.substr(0, spacepos);
 	auto value=data.substr(spacepos+1);
-	get_value(key).set(to_any(int64_t(to_number(value))), *this);
+	get_value(key).set(to_value(int64_t(to_number(value))), *this);
 }
 
 
@@ -126,7 +127,7 @@ Symbol& Context::get_value(const std::string& key)
 		return I->second;
 	auto J=symboltable.insert(std::make_pair(key,Symbol(key)));
 	
-	// Add new dependenies, if matches any old dependency.
+	// Add new dependenies, if matches value old dependency.
 	for(auto &kv: glob_dependencies_programs){
 		if (glob_match(key, kv.first)){
 			J.first->second.run_at_modify(kv.second);
@@ -136,7 +137,7 @@ Symbol& Context::get_value(const std::string& key)
 	return J.first->second;
 }
 
-any Context::fn(const std::string& fname, const std::vector<any> &vars){
+value Context::fn(const std::string& fname, const std::vector<value> &vars){
 	auto F=functions.find(fname);
 	if (F==std::end(functions))
 		throw std::runtime_error("Unknown function <"+fname+"> called.");
@@ -144,9 +145,9 @@ any Context::fn(const std::string& fname, const std::vector<any> &vars){
 	return F->second(*this, vars);
 }
 
-any Context::get_glob_values(const std::string& glob){
-	std::vector<any> ret;
-	// Add new dependenies, if matches any old dependency.
+value Context::get_glob_values(const std::string& glob){
+	std::vector<value> ret;
+	// Add new dependenies, if matches value old dependency.
 	for(auto &kv: symboltable){
 		if (glob_match(kv.first, glob)){
 			auto &val=kv.second.get();
@@ -154,7 +155,7 @@ any Context::get_glob_values(const std::string& glob){
 				ret.push_back(val->clone());
 		}
 	}
-	return to_any(std::move(ret));
+	return to_value(std::move(ret));
 }
 
 std::vector<Symbol*> Context::symboltable_filter(const std::string &glob){
@@ -170,7 +171,7 @@ std::vector<Symbol*> Context::symboltable_filter(const std::string &glob){
 	return ret;
 }
 
-void Context::register_function(std::string fnname, std::function<any (Context &, const std::vector<any> &)> f)
+void Context::register_function(std::string fnname, std::function<value (Context &, const std::vector<value> &)> f)
 {
 	functions[std::move(fnname)]=f;
 }

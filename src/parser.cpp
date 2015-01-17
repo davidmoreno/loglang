@@ -19,6 +19,7 @@
 #include "parser.hpp"
 #include "tokenizer.hpp"
 #include "ast.hpp"
+#include "types.hpp"
 #include "ast_all.hpp"
 #include "program.hpp"
 
@@ -131,42 +132,24 @@ AST Parser::parse_expr2() // < > <= >= == in and or
 	AST op1=parse_expr3();
 	auto &op=tokenizer.next();
 	if (op.type==Token::OP){
-		if (op.token=="<"){
+		type_f type=type_f::NONE;
+		
+		if (op.token=="<")  type=type_f::LT;
+		if (op.token==">")  type= type_f::GT;
+		if (op.token=="<=") type=type_f::LTE;
+		if (op.token==">=") type= type_f::GTE;
+		if (op.token=="==") type=type_f::EQ;
+		if (op.token=="!=") type=type_f::NEQ;
+		if (op.token=="and")type= type_f::AND;
+		if (op.token=="or") type= type_f::OR;
+		if (op.token=="in") type= type_f::IN;
+		
+		if (type!=type_f::NONE){
 			AST op2=parse_expr2();
-			return std::make_unique<ast::Expr_lt>(std::move(op1), std::move(op2));
-		}
-		if (op.token==">"){
-			AST op2=parse_expr2();
-			return std::make_unique<ast::Expr_gt>(std::move(op1), std::move(op2));
-		}
-		if (op.token=="<="){
-			AST op2=parse_expr2();
-			return std::make_unique<ast::Expr_lte>(std::move(op1), std::move(op2));
-		}
-		if (op.token==">="){
-			AST op2=parse_expr2();
-			return std::make_unique<ast::Expr_gte>(std::move(op1), std::move(op2));
-		}
-		if (op.token=="=="){
-			AST op2=parse_expr2();
-			return std::make_unique<ast::Expr_eq>(std::move(op1), std::move(op2));
-		}
-		if (op.token=="!="){
-			AST op2=parse_expr2();
-			return std::make_unique<ast::Expr_neq>(std::move(op1), std::move(op2));
-		}
-		if (op.token=="and"){
-			AST op2=parse_expr2();
-			return std::make_unique<ast::Expr_and>(std::move(op1), std::move(op2));
-		}
-		if (op.token=="or"){
-			AST op2=parse_expr2();
-			return std::make_unique<ast::Expr_or>(std::move(op1), std::move(op2));
-		}
-		if (op.token=="in"){
-			AST op2=parse_expr2();
-			throw parsing_exception("'in' not yet");
-			//return std::make_unique<ast::Expr_gt>(std::move(op1), std::move(op2));
+			std::vector<AST> vv;
+			vv.push_back(std::move(op1));
+			vv.push_back(std::move(op2));
+			return op1->type->codegen_f( type,  std::move( vv ) );
 		}
 	}
 	tokenizer.rewind(); // Ops, not any of those
@@ -178,13 +161,17 @@ AST Parser::parse_expr3() // + -
 	AST op1=parse_expr4();
 	auto &op=tokenizer.next();
 	if (op.type==Token::OP){
-		if (op.token=="+"){
+		type_f type=type_f::NONE;
+		
+		if (op.token=="+") type=type_f::ADD;
+		if (op.token=="-") type=type_f::SUB;
+		
+		if (type!=type_f::NONE){
 			AST op2=parse_expr3();
-			return std::make_unique<ast::Expr_add>(std::move(op1), std::move(op2));
-		}
-		if (op.token=="-"){
-			AST op2=parse_expr3();
-			return std::make_unique<ast::Expr_sub>(std::move(op1), std::move(op2));
+			std::vector<AST> vv;
+			vv.push_back(std::move(op1));
+			vv.push_back(std::move(op2));
+			return op1->type->codegen_f( type,  std::move( vv ) );
 		}
 	}
 	tokenizer.rewind(); // Ops, not + nor -
@@ -197,13 +184,17 @@ AST Parser::parse_expr4() // * /
 	AST op1=parse_term();
 	auto &op=tokenizer.next();
 	if (op.type==Token::OP){
-		if (op.token=="*"){
+		type_f type=type_f::NONE;
+		
+		if (op.token=="*") type=type_f::MUL;
+		if (op.token=="/") type=type_f::DIV;
+		
+		if (type!=type_f::NONE){
 			AST op2=parse_expr4();
-			return std::make_unique<ast::Expr_mul>(std::move(op1), std::move(op2));
-		}
-		if (op.token=="/"){
-			AST op2=parse_expr4();
-			return std::make_unique<ast::Expr_div>(std::move(op1), std::move(op2));
+			std::vector<AST> vv;
+			vv.push_back(std::move(op1));
+			vv.push_back(std::move(op2));
+			return op1->type->codegen_f( type,  std::move( vv ) );
 		}
 	}
 	tokenizer.rewind(); // Ops, not / nor *

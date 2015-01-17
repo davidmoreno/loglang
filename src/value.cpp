@@ -56,24 +56,6 @@ namespace loglang{
 			return (r<0) ? -1 : (r>0) ? 1 : 0;
 		}
 	};
-	class _int : public value_base{
-		int64_t val;
-	public:
-		_int(int64_t d) : value_base("int"), val(d) {}
-		virtual int64_t to_int() const override{
-			return val;
-		}
-		virtual double to_double() const override{
-			return val;
-		}
-		std::unique_ptr< value_base > clone() const override{
-			return to_any(val);
-		}
-		
-		int cmp(const any &o) const{
-			return val - o->to_int();
-		}
-	};
 	class _bool : public value_base{
 		bool val;
 	public:

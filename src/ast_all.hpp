@@ -30,7 +30,7 @@ namespace loglang{
 			AST op2;
 		public:
 			Equal(std::string var, AST op2) : var(var), op2(std::move(op2)){}
-			any eval(Context &context){
+			value eval(Context &context){
 				auto op2_res=op2->eval(context);
 				context.get_value(var).set(op2_res->clone(), context);
 				return op2_res;
@@ -46,23 +46,23 @@ namespace loglang{
 		};
 		class Value_const : public Value{
 		public:
-			any val;
+			value val;
 			Value_const(Token t){
 				switch(t.type){
 					case Token::NUMBER:
 						if (std::find(std::begin(t.token),std::end(t.token),'.')==std::end(t.token))
-							val=std::move(to_any(int64_t(to_number(t.token))));
+							val=std::move(to_value(int64_t(to_number(t.token))));
 						else
-							val=std::move(to_any(to_number(t.token)));
+							val=std::move(to_value(to_number(t.token)));
 					break;
 					case Token::STRING:
-						val=std::move(to_any(t.token));
+						val=std::move(to_value(t.token));
 					break;
 					default:
 						throw parsing_exception("Unknown value type: "+t.token);
 				}
 			}
-			any eval(Context &context){
+			value eval(Context &context){
 				return val->clone();
 			}
 			
@@ -78,7 +78,7 @@ namespace loglang{
 		public:
 			std::string var;
 			Value_var(Token _val) : var(_val.token) {}
-			any eval(Context &context){
+			value eval(Context &context){
 				auto &v=context.get_value(var).get();
 				if (!v)
 					throw std::runtime_error(std::string("Value <")+var+"> undefined. Cant use yet.");
@@ -95,7 +95,7 @@ namespace loglang{
 		public:
 			std::string var;
 			Value_glob(Token _val) : var(_val.token) {}
-			any eval(Context &context){
+			value eval(Context &context){
 				return context.get_glob_values( var );
 			}
 			std::set<std::string> dependencies(){
@@ -105,7 +105,6 @@ namespace loglang{
 				return "<ValueGlob "+var+">";
 			};
 		};
-		
 		class Expr : public ASTBase{
 		public:
 			AST op1;
@@ -122,16 +121,17 @@ namespace loglang{
 			};
 		};
 		
+		/*
 		class Expr_mul : public Expr{
 		public:
 			Expr_mul(AST op1, AST op2) : Expr(std::move(op1), std::move(op2)) {}
-			any eval(Context &context){
+			value eval(Context &context){
 				auto r1=op1->eval(context);
 				auto r2=op2->eval(context);
 				if (r1->type_name==r2->type_name && r1->type_name=="int")
-					return to_any( op1->eval(context)->to_int() * op2->eval(context)->to_int() );
+					return to_value( op1->eval(context)->to_int() * op2->eval(context)->to_int() );
 				else
-					return to_any( op1->eval(context)->to_double() * op2->eval(context)->to_double() );
+					return to_value( op1->eval(context)->to_double() * op2->eval(context)->to_double() );
 			}
 			std::string to_string(){
 				return to_string_("Expr_mul");
@@ -140,10 +140,10 @@ namespace loglang{
 		class Expr_div : public Expr{
 		public:
 			Expr_div(AST op1, AST op2) : Expr(std::move(op1), std::move(op2)) {}
-			any eval(Context &context){
+			value eval(Context &context){
 				auto r1=op1->eval(context);
 				auto r2=op2->eval(context);
-				return to_any( r1->to_double() / r2->to_double() );
+				return to_value( r1->to_double() / r2->to_double() );
 			}
 			std::string to_string(){
 				return to_string_("Expr_div");
@@ -152,8 +152,8 @@ namespace loglang{
 		class Expr_lt : public Expr{
 		public:
 			Expr_lt(AST op1, AST op2) : Expr(std::move(op1), std::move(op2)) {}
-			any eval(Context &context){
-				return to_any( op1->eval(context)->to_double() < op2->eval(context)->to_double() );
+			value eval(Context &context){
+				return to_value( op1->eval(context)->to_double() < op2->eval(context)->to_double() );
 			}
 			std::string to_string(){
 				return to_string_("Expr_lt");
@@ -162,8 +162,8 @@ namespace loglang{
 		class Expr_lte : public Expr{
 		public:
 			Expr_lte(AST op1, AST op2) : Expr(std::move(op1), std::move(op2)) {}
-			any eval(Context &context){
-				return to_any( op1->eval(context)->to_double() <= op2->eval(context)->to_double() );
+			value eval(Context &context){
+				return to_value( op1->eval(context)->to_double() <= op2->eval(context)->to_double() );
 			}
 			std::string to_string(){
 				return to_string_("Expr_lte");
@@ -172,8 +172,8 @@ namespace loglang{
 		class Expr_gt : public Expr{
 		public:
 			Expr_gt(AST op1, AST op2) : Expr(std::move(op1), std::move(op2)) {}
-			any eval(Context &context){
-				return to_any( op1->eval(context)->to_double() > op2->eval(context)->to_double() );
+			value eval(Context &context){
+				return to_value( op1->eval(context)->to_double() > op2->eval(context)->to_double() );
 			}
 			std::string to_string(){
 				return to_string_("Expr_gt");
@@ -182,8 +182,8 @@ namespace loglang{
 		class Expr_gte : public Expr{
 		public:
 			Expr_gte(AST op1, AST op2) : Expr(std::move(op1), std::move(op2)) {}
-			any eval(Context &context){
-				return to_any( op1->eval(context)->to_double() >= op2->eval(context)->to_double() );
+			value eval(Context &context){
+				return to_value( op1->eval(context)->to_double() >= op2->eval(context)->to_double() );
 			}
 			std::string to_string(){
 				return to_string_("Expr_gte");
@@ -192,8 +192,8 @@ namespace loglang{
 		class Expr_eq : public Expr{
 		public:
 			Expr_eq(AST op1, AST op2) : Expr(std::move(op1), std::move(op2)) {}
-			any eval(Context &context){
-				return to_any( op1->eval(context)->to_double() == op2->eval(context)->to_double() );
+			value eval(Context &context){
+				return to_value( op1->eval(context)->to_double() == op2->eval(context)->to_double() );
 			}
 			std::string to_string(){
 				return to_string_("Expr_eq");
@@ -202,8 +202,8 @@ namespace loglang{
 		class Expr_neq : public Expr{
 		public:
 			Expr_neq(AST op1, AST op2) : Expr(std::move(op1), std::move(op2)) {}
-			any eval(Context &context){
-				return to_any( op1->eval(context)->to_double() != op2->eval(context)->to_double() );
+			value eval(Context &context){
+				return to_value( op1->eval(context)->to_double() != op2->eval(context)->to_double() );
 			}
 			std::string to_string(){
 				return to_string_("Expr_neq");
@@ -212,16 +212,16 @@ namespace loglang{
 		class Expr_add : public Expr{
 		public:
 			Expr_add(AST op1, AST op2) : Expr(std::move(op1), std::move(op2)) {}
-			any eval(Context &context){
+			value eval(Context &context){
 				auto r1=op1->eval(context);
 				auto r2=op2->eval(context);
 				if (r1->type_name==r2->type_name){
 					if (r1->type_name=="string")
-						return to_any( r1->to_string() + r2->to_string() );
+						return to_value( r1->to_string() + r2->to_string() );
 					if (r1->type_name=="int")
-						return to_any( r1->to_int() + r2->to_int() );
+						return to_value( r1->to_int() + r2->to_int() );
 				}
-				return to_any( r1->to_double() + r2->to_double() );
+				return to_value( r1->to_double() + r2->to_double() );
 			}
 			std::string to_string(){
 				return to_string_("Expr_add");
@@ -230,14 +230,14 @@ namespace loglang{
 		class Expr_sub : public Expr{
 		public:
 			Expr_sub(AST op1, AST op2) : Expr(std::move(op1), std::move(op2)) {}
-			any eval(Context &context){
+			value eval(Context &context){
 				auto r1=op1->eval(context);
 				auto r2=op2->eval(context);
 				if (r1->type_name==r2->type_name){
 					if (r1->type_name=="int")
-						return to_any( r1->to_int() - r2->to_int() );
+						return to_value( r1->to_int() - r2->to_int() );
 				}
-				return to_any( r1->to_double() - r2->to_double() );
+				return to_value( r1->to_double() - r2->to_double() );
 			}
 			std::string to_string(){
 				return to_string_("Expr_sub");
@@ -246,10 +246,10 @@ namespace loglang{
 		class Expr_and : public Expr{
 		public:
 			Expr_and(AST op1, AST op2) : Expr(std::move(op1), std::move(op2)) {}
-			any eval(Context &context){
+			value eval(Context &context){
 				auto r1=op1->eval(context);
 				auto r2=op2->eval(context);
-				return to_any( r1->to_bool() && r2->to_bool() );
+				return to_value( r1->to_bool() && r2->to_bool() );
 			}
 			std::string to_string(){
 				return to_string_("Expr_and");
@@ -258,21 +258,22 @@ namespace loglang{
 		class Expr_or : public Expr{
 		public:
 			Expr_or(AST op1, AST op2) : Expr(std::move(op1), std::move(op2)) {}
-			any eval(Context &context){
+			value eval(Context &context){
 				auto r1=op1->eval(context);
 				auto r2=op2->eval(context);
-				return to_any( r1->to_bool() || r2->to_bool() );
+				return to_value( r1->to_bool() || r2->to_bool() );
 			}
 			std::string to_string(){
 				return to_string_("Expr_and");
 			}
 		};
+		*/
 		class Block : public ASTBase{
 		public:
 			std::vector<AST> stmts;
 			Block() {}
-			any eval(Context &context){
-				any ret;
+			value eval(Context &context){
+				value ret;
 				for(auto &st:stmts)
 					ret=std::move( st->eval(context) ); 
 				return ret;
@@ -303,7 +304,8 @@ namespace loglang{
 			
 			Edge_if(AST _cond, AST if_true, AST if_false) : Expr(std::move(if_true), std::move(if_false)) , cond(std::move(_cond)), prev_value(false) {
 			}
-			any eval(Context &context){
+			value eval(Context &context){
+				/*
 				bool current=cond->eval(context)->to_bool();
 				if (current!=prev_value){
 					prev_value=current;
@@ -312,7 +314,8 @@ namespace loglang{
 					else
 						return op2->eval(context);
 				}
-				return to_any(false);
+				*/
+				return to_value(false);
 			}
 			std::set< std::string > dependencies(){
 				return cond->dependencies();
@@ -323,17 +326,17 @@ namespace loglang{
 		};
 		class At : public Expr{
 		public:
-			any prev_value;
+			value prev_value;
 			
 			At(AST _cond, AST _do) : Expr(std::move(_cond), std::move(_do)) {
 			}
-			any eval(Context &context){
-				any current=op1->eval(context);
+			value eval(Context &context){
+				value current=op1->eval(context);
 				if (current!=prev_value){
 					prev_value=std::move(current);
 					return op2->eval(context);
 				}
-				return to_any("");
+				return to_value("");
 			}
 			std::set< std::string > dependencies(){
 				return op1->dependencies();
@@ -347,8 +350,8 @@ namespace loglang{
 			Function(std::string fn) : fnname(std::move(fn)){}
 			std::string fnname;
 			std::vector<AST> params;
-			any eval(Context& context){
-				std::vector<any> args;
+			value eval(Context& context){
+				std::vector<value> args;
 				for(auto &ev: params){
 					args.push_back(ev->eval(context));
 				}

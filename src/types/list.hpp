@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 David Moreno
+ * Copyright 2014-2015 David Moreno
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,16 @@
 
 #pragma once
 
-#include <string>
-#include <set>
-
-#include "value.hpp"
+#include "../types.hpp"
 
 namespace loglang{
-	class Context;
-	class type_base;
-	class ASTBase{
+	class list_t : public loglang::type_base{
 	public:
-		type_base *type=nullptr;
-		virtual ~ASTBase(){}
-		virtual value eval(Context &context) = 0;
-		virtual std::string to_string() = 0;
-		virtual std::set<std::string> dependencies() = 0;
+		list_t();
+		AST codegen_f(type_f fid, std::vector< AST > args);
+		value create(int64_t v);
+		std::vector<value> to_list(const value &v);
 	};
-	
-	using AST=std::unique_ptr<ASTBase>;
+
+	extern list_t list_type;
 }

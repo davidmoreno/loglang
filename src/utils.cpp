@@ -78,5 +78,13 @@ namespace loglang {
 		if (std::isspace(data[0]))
 			trim(data);
 	}
+	
+	/// Adds two sets. First as lref to use thrown aways.
+	std::set< std::string > operator+(std::set< std::string > s1, const std::set< std::string >& s2)
+	{
+		for(auto &s: s2)
+			s1.insert(s);
+		return  s1;
+	}
 }
 
