@@ -55,8 +55,10 @@ int main(int argc, char **argv){
 		std::cerr<<"Uncatched exception. "<<e.what()<<std::endl;
 		return 1;
 	}
+#ifdef __DEBUG__
 	std::cerr<<"---"<<std::endl;
 	context.debug_values();
+#endif
 	
 	return 0;
 }
