@@ -23,7 +23,8 @@ namespace loglang{
 	public:
 		string_t();
 		AST codegen_f(type_f fid, std::vector< AST > args);
-		value create(int64_t v);
+		value create(std::string v) const;
+		value create() const;
 		std::string to_string(const value &v);
 	};
 

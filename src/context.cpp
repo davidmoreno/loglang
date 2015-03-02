@@ -25,6 +25,9 @@
 #include "types.hpp"
 #include "utils.hpp"
 #include "builtins.hpp"
+#include "types/int.hpp"
+#include "types/list.hpp"
+
 
 using namespace loglang;
 
@@ -62,10 +65,10 @@ void Context::feed_secure(std::string data)
 			auto value=data.substr(colonpos+1);
 			std::shared_ptr<Program> prog;
 			try{
-				prog=std::make_shared<Program>(key, std::move(value));
+				prog=std::make_shared<Program>(key, value);
 			}
 			catch(std::exception &excp){
-				std::cerr<<"Error compiling: "<<excp.what()<<std::endl;
+				std::cerr<<"Error compiling: "<< value <<" "<<excp.what()<<std::endl;
 				return;
 			}
 			
@@ -95,7 +98,7 @@ void Context::feed(std::string data){
 	auto spacepos=data.find_first_of(' ');
 	auto key=data.substr(0, spacepos);
 	auto value=data.substr(spacepos+1);
-	get_value(key).set(to_value(int64_t(to_number(value))), *this);
+	get_value(key).set( int_type.create(to_number(value)), *this);
 }
 
 
@@ -155,7 +158,7 @@ value Context::get_glob_values(const std::string& glob){
 				ret.push_back(val->clone());
 		}
 	}
-	return to_value(std::move(ret));
+	return list_type.create(std::move(ret));
 }
 
 std::vector<Symbol*> Context::symboltable_filter(const std::string &glob){

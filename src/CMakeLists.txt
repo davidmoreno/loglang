@@ -1,5 +1,5 @@
 add_executable(loglang 
-	types.cpp
+	types.cpp value.cpp
 	main.cpp utils.cpp parser.cpp context.cpp symbol.cpp program.cpp tokenizer.cpp glob.cpp builtins.cpp
 	)
 

@@ -23,7 +23,20 @@
 #include "ast.hpp"
 
 namespace loglang{
-	class unknown_function : public std::exception{	};
+	enum class type_f;
+	class type_base;
+	using type=type_base *;
+	
+
+	class unknown_function : public std::exception{
+		std::string fname;
+	public:
+		unknown_function(type t, const std::string &function_name);
+		unknown_function(type t, type_f f);
+		virtual const char* what() const throw(){
+			return fname.c_str();
+		}
+	};
 	class invalid_argument_count : public std::exception{
 	public:
 		std::string txt;
@@ -37,17 +50,13 @@ namespace loglang{
 	class invalid_function_argument_type : public std::exception{
 	public:
 		std::string txt;
-		invalid_function_argument_type(int argc, const std::string &expected){
-			txt=std::string("Expected ")+ expected + " at argument "+std::to_string(argc);
+		invalid_function_argument_type(int argc, const std::string &expected, const std::string &at="??"){
+			txt=std::string("Expected ")+ expected + " at argument "+std::to_string(argc)+": "+at;
 		};
 		const char* what() const throw(){
 			return txt.c_str();
 		}
 	};
-	
-	class type_base;
-	
-	using type=type_base *;
 	
 	enum class type_f{
 		NONE=0,
@@ -65,6 +74,7 @@ namespace loglang{
 		AND,
 		OR,
 		IN,
+		TO_STRING,
 	};
 	
 	class type_base{
@@ -84,15 +94,13 @@ namespace loglang{
 		std::string name;
 		type_base(type_base::type_id t);
 		virtual ~type_base(){}
-		virtual AST codegen_f(type_f fid, std::vector<AST> args) = 0;
+		
+		virtual AST codegen_f(type_f fid, std::vector<AST> args) = 0; // Create the AST for the given OP
+		virtual value create() const = 0; // Create a new value of this type. With default value. If not possible, throw.
+		virtual std::string repr(const value &) const { return "<no repr defined>"; }
+		
+		
 // 		virtual AST codegen_f(type_f fid, std::initializer_list<AST &&> &&args);
 // 		virtual AST codegen_f(type_f fid, std::initializer_list<AST &&> &&args);
 	};
-	
-	
-	value to_value(int64_t v);
-	value to_value(double v);
-	value to_value(std::string v);
-	value to_value(bool v);
-	value to_value(std::vector<value> v);
 }

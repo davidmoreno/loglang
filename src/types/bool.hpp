@@ -19,15 +19,14 @@
 #include "../types.hpp"
 
 namespace loglang{
-	class double_t : public loglang::type_base{
+	class bool_t : public loglang::type_base{
 	public:
-		double_t();
+		bool_t();
 		AST codegen_f(type_f fid, std::vector< AST > args);
-		value create(double v) const;
+		value create(bool v) const;
+		bool to_bool(const value &v) const;
 		value create() const;
-		double to_double(const value &v);
-		std::string repr(const value&) const;
 	};
 
-	extern double_t double_type;
+	extern bool_t bool_type;
 }

@@ -21,10 +21,13 @@
 namespace loglang{
 	class list_t : public loglang::type_base{
 	public:
+		using unboxed=std::vector<value>;
+		
 		list_t();
 		AST codegen_f(type_f fid, std::vector< AST > args);
-		value create(int64_t v);
-		std::vector<value> to_list(const value &v);
+		value create(unboxed v) const;
+		value create() const;
+		unboxed unbox(const value &v) const;
 	};
 
 	extern list_t list_type;

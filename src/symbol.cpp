@@ -20,6 +20,7 @@
 #include "program.hpp"
 #include "types.hpp"
 #include "context.hpp"
+#include "types/string.hpp"
 
 using namespace loglang;
 
@@ -52,7 +53,7 @@ void Symbol::set(value new_val, Context &context)
 // 	context.output(name, value);
 	if (_name=="%") // Prevent recursion.
 		return;
-	context.get_value("%").set(to_value(_name), context);
+	context.get_value("%").set(string_type.create(_name), context);
 	for(auto program: at_modify)
 		program->run(context);
 }

@@ -22,6 +22,10 @@
 #include "utils.hpp"
 #include "ast.hpp"
 #include "context.hpp"
+#include "types/int.hpp"
+#include "types/double.hpp"
+#include "types/string.hpp"
+#include "types/bool.hpp"
 
 namespace loglang{
 	namespace ast{
@@ -51,16 +55,17 @@ namespace loglang{
 				switch(t.type){
 					case Token::NUMBER:
 						if (std::find(std::begin(t.token),std::end(t.token),'.')==std::end(t.token))
-							val=std::move(to_value(int64_t(to_number(t.token))));
+							val=int_type.create( to_number(t.token));
 						else
-							val=std::move(to_value(to_number(t.token)));
+							val=double_type.create( to_number(t.token));
 					break;
 					case Token::STRING:
-						val=std::move(to_value(t.token));
+						val=string_type.create(t.token);
 					break;
 					default:
 						throw parsing_exception("Unknown value type: "+t.token);
 				}
+				type=val->type;
 			}
 			value eval(Context &context){
 				return val->clone();
@@ -77,7 +82,14 @@ namespace loglang{
 		class Value_var : public Value{
 		public:
 			std::string var;
-			Value_var(Token _val) : var(_val.token) {}
+			Value_var(Token _val) : var(_val.token) {
+// 				auto &v=context.get_value(var).get();
+// 				if (!v)
+// 					throw std::runtime_error(std::string("Value <")+var+"> undefined. Cant use yet.");
+				std::cerr<<"FIXME Assuming vars are all ints"<<std::endl;
+				type=&int_type;
+				
+			}
 			value eval(Context &context){
 				auto &v=context.get_value(var).get();
 				if (!v)
@@ -315,7 +327,7 @@ namespace loglang{
 						return op2->eval(context);
 				}
 				*/
-				return to_value(false);
+				return bool_type.create(false);
 			}
 			std::set< std::string > dependencies(){
 				return cond->dependencies();
@@ -336,7 +348,7 @@ namespace loglang{
 					prev_value=std::move(current);
 					return op2->eval(context);
 				}
-				return to_value("");
+				return op2->type->create();
 			}
 			std::set< std::string > dependencies(){
 				return op1->dependencies();

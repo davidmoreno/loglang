@@ -23,8 +23,10 @@ namespace loglang{
 	public:
 		int_t();
 		AST codegen_f(type_f fid, std::vector< AST > args);
-		value create(int64_t v);
 		int64_t to_int(const value &v);
+		value create(int64_t v) const;
+		value create() const;
+		std::string repr(const value &) const;
 	};
 
 	extern int_t int_type;

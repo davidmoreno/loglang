@@ -15,6 +15,7 @@
  */
 
 #include <iostream>
+#include <assert.h>
 
 #include "parser.hpp"
 #include "tokenizer.hpp"
@@ -147,9 +148,10 @@ AST Parser::parse_expr2() // < > <= >= == in and or
 		if (type!=type_f::NONE){
 			AST op2=parse_expr2();
 			std::vector<AST> vv;
+			auto op1_type=op1->type;
 			vv.push_back(std::move(op1));
 			vv.push_back(std::move(op2));
-			return op1->type->codegen_f( type,  std::move( vv ) );
+			return op1_type->codegen_f( type,  std::move( vv ) );
 		}
 	}
 	tokenizer.rewind(); // Ops, not any of those
@@ -169,9 +171,11 @@ AST Parser::parse_expr3() // + -
 		if (type!=type_f::NONE){
 			AST op2=parse_expr3();
 			std::vector<AST> vv;
+// 			std::cerr<<op1->to_string()<<std::endl;
+			auto op1_type=op1->type;
 			vv.push_back(std::move(op1));
 			vv.push_back(std::move(op2));
-			return op1->type->codegen_f( type,  std::move( vv ) );
+			return op1_type->codegen_f( type,  std::move( vv ) );
 		}
 	}
 	tokenizer.rewind(); // Ops, not + nor -
@@ -190,11 +194,13 @@ AST Parser::parse_expr4() // * /
 		if (op.token=="/") type=type_f::DIV;
 		
 		if (type!=type_f::NONE){
+// 			std::cerr<<op1->to_string()<<std::endl;
 			AST op2=parse_expr4();
 			std::vector<AST> vv;
+			auto op1_type=op1->type;
 			vv.push_back(std::move(op1));
 			vv.push_back(std::move(op2));
-			return op1->type->codegen_f( type,  std::move( vv ) );
+			return op1_type->codegen_f( type,  std::move( vv ) );
 		}
 	}
 	tokenizer.rewind(); // Ops, not / nor *

@@ -24,31 +24,32 @@
 #include "types/string.hpp"
 #include "types/double.hpp"
 #include "types/list.hpp"
+#include "types/bool.hpp"
 
 namespace loglang{
 	namespace builtins{
 		static value sum(Context&, const std::vector<value> &vars){
 			double n=0.0;
 			for(auto &v: vars){
-				auto operands=list_type.to_list(v);
+				auto operands=list_type.unbox(v);
 				for (auto &op: operands)
 					n+= double_type.to_double(op);
 			}
-			return to_value( n );
+			return double_type.create( n );
 		}
 		static value print(Context &context, const std::vector<value> &vars){
 			auto symlist=context.symboltable_filter( string_type.to_string( vars[0] ));
 			for (auto sym: symlist){
 				context.output(sym->name(), std::to_string( sym->get() ));
 			}
-			return to_value( (int64_t)vars.size() );
+			return int_type.create( (int64_t)vars.size() );
 		}
 		static value round(Context &context, const std::vector<value> &vars){
 			auto dataitem=double_type.to_double( vars[0] );
 			auto ndig=double_type.to_double( vars[1] );
 			double mult=pow(10, ndig);
 	// 		std::cerr<<dataitem<<" "<<mult<<std::endl;
-			return to_value( int( dataitem * mult ) / mult );
+			return double_type.create( int( dataitem * mult ) / mult );
 		}
 
 		static value debug(Context &context, const std::vector<value> &vars){
@@ -56,7 +57,7 @@ namespace loglang{
 			for(auto &v: vars)
 				std::cerr<<string_type.to_string( v )<<" ";
 			std::cerr<<std::endl;
-			return to_value( true );
+			return bool_type.create( true );
 		}
 		
 	}
