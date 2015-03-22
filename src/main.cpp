@@ -16,41 +16,38 @@
 
 #include <iostream>
 #include <fstream>
+#include <fcntl.h>
 
 #include "context.hpp"
 #include "utils.hpp"
+#include "feedbox.hpp"
 
 int main(int argc, char **argv){
-	auto &input=std::cin;
-	input.sync_with_stdio(false);
+// 	auto &input=std::cin;
+// 	input.sync_with_stdio(false);
 	std::cout.sync_with_stdio(false);
 	
-	std::string line;
 	loglang::Context context;
+	loglang::FeedBox feedbox;
 // 	parser.set_output([](const std::string &output){ std::cout<<">> "<<output<<std::endl; });
 
 	try{
 		for(int i=1;i<argc;i++){
-			std::ifstream fin(argv[i],std::ios::in);
-			if (!fin.is_open()){
-				throw std::ios_base::failure(std::string("Cant open ")+argv[i]);
+			int fd=open(argv[i], O_RDONLY);
+			try{
+				if (fd<0){
+					throw std::ios_base::failure(std::string("Cant open ")+argv[i]);
+				}
+				feedbox.add_feed( fd, true );
 			}
-			while(!fin.eof()){
-				std::getline(fin, line);
-				loglang::clean(line);
-				if (line.length()>0)
-					context.feed_secure(line);
+			catch(const std::exception &ex){
+				std::cerr<<argv[1] <<": "<<ex.what()<<std::endl;
+				return 1;
 			}
-			fin.close();
 		}
-	
-		while(!input.eof()){
-			std::getline(input, line);
-			
-			loglang::clean(line);
-			if (line.length()>0)
-				context.feed(line);
-		}
+		feedbox.add_feed( 0 );
+		
+		feedbox.run(context);
 	}catch(const std::exception &e){
 		std::cerr<<"Uncatched exception. "<<e.what()<<std::endl;
 		return 1;
