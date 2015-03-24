@@ -17,6 +17,7 @@
 #pragma once
 
 #include <map>
+#include <memory>
 
 namespace loglang{
 	/**
@@ -31,20 +32,23 @@ namespace loglang{
 	class Context;
 	
 	class FeedBox{
-		std::map<int, Feed> feeds;
+		std::map<int, std::shared_ptr<Feed>> feeds;
 		int wd; // inotify descriptor
 		int pollfd;
 		bool running;
 		char *rline; // Temporal storage for line
 		size_t rline_size;
+		size_t epoll_files=0;
 	public:
 		FeedBox();
 		~FeedBox();
 		
-		void add_feed(int fd, bool is_secure=false);
+		void add_feed(std::string filename, bool is_secure, Context &ctx);
 		void remove_feed(int fd);
 		
 		void run(Context &ctx);
 		void run_once(Context &ctx);
+		
+		void stop();
 	};
 }

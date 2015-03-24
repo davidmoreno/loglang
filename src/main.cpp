@@ -16,36 +16,41 @@
 
 #include <iostream>
 #include <fstream>
-#include <fcntl.h>
+#include <signal.h>
 
 #include "context.hpp"
 #include "utils.hpp"
 #include "feedbox.hpp"
 
+loglang::FeedBox feedbox;
+
+void stop(int){
+	std::cerr<<"exit"<<std::endl;
+	feedbox.stop();
+}
+
 int main(int argc, char **argv){
 // 	auto &input=std::cin;
 // 	input.sync_with_stdio(false);
-	std::cout.sync_with_stdio(false);
+// 	std::cout.sync_with_stdio(false);
+	
+	signal(SIGTERM, stop);
+	signal(SIGINT, stop);
 	
 	loglang::Context context;
-	loglang::FeedBox feedbox;
-// 	parser.set_output([](const std::string &output){ std::cout<<">> "<<output<<std::endl; });
+	context.set_output([](const std::string &output){ std::cout<<">> "<<output<<std::endl; });
 
 	try{
 		for(int i=1;i<argc;i++){
-			int fd=open(argv[i], O_RDONLY);
 			try{
-				if (fd<0){
-					throw std::ios_base::failure(std::string("Cant open ")+argv[i]);
-				}
-				feedbox.add_feed( fd, true );
+				feedbox.add_feed( argv[i], true, context);
 			}
 			catch(const std::exception &ex){
-				std::cerr<<argv[1] <<": "<<ex.what()<<std::endl;
+				std::cerr<<argv[i] <<": "<<ex.what()<<std::endl;
 				return 1;
 			}
 		}
-		feedbox.add_feed( 0 );
+		feedbox.add_feed( "<stdin>", false, context);
 		
 		feedbox.run(context);
 	}catch(const std::exception &e){
