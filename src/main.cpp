@@ -33,6 +33,7 @@ int main(int argc, char **argv){
 // 	auto &input=std::cin;
 // 	input.sync_with_stdio(false);
 // 	std::cout.sync_with_stdio(false);
+	bool debug=false;
 	
 	signal(SIGTERM, stop);
 	signal(SIGINT, stop);
@@ -42,12 +43,16 @@ int main(int argc, char **argv){
 
 	try{
 		for(int i=1;i<argc;i++){
-			try{
-				feedbox.add_feed( argv[i], true, context);
-			}
-			catch(const std::exception &ex){
-				std::cerr<<argv[i] <<": "<<ex.what()<<std::endl;
-				return 1;
+			if (argv[i]==std::string("--debug"))
+				debug=true;
+			else{
+				try{
+					feedbox.add_feed( argv[i], true, context);
+				}
+				catch(const std::exception &ex){
+					std::cerr<<argv[i] <<": "<<ex.what()<<std::endl;
+					return 1;
+				}
 			}
 		}
 		feedbox.add_feed( "<stdin>", false, context);
@@ -57,10 +62,10 @@ int main(int argc, char **argv){
 		std::cerr<<"Uncatched exception. "<<e.what()<<std::endl;
 		return 1;
 	}
-#ifdef __DEBUG__
-	std::cerr<<"---"<<std::endl;
-	context.debug_values();
-#endif
+	if (debug){
+		std::cerr<<"--- Final memory status:"<<std::endl;
+		context.debug_values();
+	}
 	
 	return 0;
 }

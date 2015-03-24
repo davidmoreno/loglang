@@ -97,7 +97,22 @@ namespace loglang{
 		}
 		
 		void feed_full_file(Context &ctx){
+			char *line=(char*)malloc(1024);
+			size_t line_size=1024;
 			
+			while (!feof(file)){
+				ssize_t len=getline(&line, &line_size, file);
+				if (len>=0){
+					if (is_secure)
+						ctx.feed_secure(line);
+					else
+						ctx.feed(line);
+				}
+			}
+			fclose(file);
+			fd=-1;
+			if (line)
+				free(line);
 		}
 		
 	};
@@ -191,7 +206,7 @@ void FeedBox::run_once(Context &ctx){
 		
 		line=std::string(rline, len);
 		loglang::clean(line);
-		
+
 		if (feed->is_secure)
 			ctx.feed_secure(line);
 		else
