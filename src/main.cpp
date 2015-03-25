@@ -22,11 +22,12 @@
 #include "utils.hpp"
 #include "feedbox.hpp"
 
-loglang::FeedBox feedbox;
+std::function<void()> stop_cb;
 
 void stop(int){
 	std::cerr<<"exit"<<std::endl;
-	feedbox.stop();
+	if (stop_cb)
+		stop_cb();
 }
 
 int main(int argc, char **argv){
@@ -38,8 +39,11 @@ int main(int argc, char **argv){
 	signal(SIGTERM, stop);
 	signal(SIGINT, stop);
 	
-	loglang::Context context;
-	context.set_output([](const std::string &output){ std::cout<<">> "<<output<<std::endl; });
+	auto context=std::make_shared<loglang::Context>();
+	loglang::FeedBox feedbox(context);
+
+	context->set_output([](const std::string &output){ std::cout<<">> "<<output<<std::endl; });
+	stop_cb=[&feedbox](){ feedbox.stop(); };
 
 	try{
 		for(int i=1;i<argc;i++){
@@ -47,7 +51,7 @@ int main(int argc, char **argv){
 				debug=true;
 			else{
 				try{
-					feedbox.add_feed( argv[i], true, context);
+					feedbox.add_feed( argv[i], true);
 				}
 				catch(const std::exception &ex){
 					std::cerr<<argv[i] <<": "<<ex.what()<<std::endl;
@@ -55,16 +59,16 @@ int main(int argc, char **argv){
 				}
 			}
 		}
-		feedbox.add_feed( "<stdin>", false, context);
+		feedbox.add_feed( "<stdin>", false);
 		
-		feedbox.run(context);
+		feedbox.run();
 	}catch(const std::exception &e){
 		std::cerr<<"Uncatched exception. "<<e.what()<<std::endl;
 		return 1;
 	}
 	if (debug){
 		std::cerr<<"--- Final memory status:"<<std::endl;
-		context.debug_values();
+		context->debug_values();
 	}
 	
 	return 0;

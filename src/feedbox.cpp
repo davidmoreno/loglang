@@ -129,7 +129,7 @@ namespace loglang{
 
 using namespace loglang;
 
-FeedBox::FeedBox()
+FeedBox::FeedBox(std::shared_ptr<Context> ctx) : ctx(ctx)
 {
 	pollfd=epoll_create(8);
 	if (pollfd<0){
@@ -150,7 +150,7 @@ FeedBox::~FeedBox()
 /**
  * @short Adds a feed to the box
  */
-void FeedBox::add_feed(std::string filename, bool is_secure, Context &ctx)
+void FeedBox::add_feed(std::string filename, bool is_secure)
 {
 	auto feed=std::make_shared<Feed>(std::move(filename), is_secure, Feed::EPOLL);
 	
@@ -169,7 +169,7 @@ void FeedBox::add_feed(std::string filename, bool is_secure, Context &ctx)
 	
 	
 	if (feed->type==Feed::INOTIFY){
-		feed->feed_full_file(ctx);
+		feed->feed_full_file(*ctx);
 	}
 	else
 		++epoll_files;
@@ -185,13 +185,13 @@ void FeedBox::remove_feed(int fd){
 	}
 }
 
-void FeedBox::run(Context &ctx){
+void FeedBox::run(){
 	running=true;
 	while (running)
-		run_once(ctx);
+		run_once();
 }
 
-void FeedBox::run_once(Context &ctx){
+void FeedBox::run_once(){
 	struct epoll_event events[8];
 	if (epoll_files<=0){
 		running=false;
@@ -217,9 +217,9 @@ void FeedBox::run_once(Context &ctx){
 		loglang::clean(line);
 
 		if (feed->is_secure)
-			ctx.feed_secure(line);
+			ctx->feed_secure(line);
 		else
-			ctx.feed(line);
+			ctx->feed(line);
 	}
 }
 

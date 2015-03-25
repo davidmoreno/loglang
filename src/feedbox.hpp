@@ -39,15 +39,21 @@ namespace loglang{
 		char *rline; // Temporal storage for line
 		size_t rline_size;
 		size_t epoll_files=0;
+		std::shared_ptr<Context> ctx;
 	public:
-		FeedBox();
+		FeedBox(std::shared_ptr<Context> ctx);
 		~FeedBox();
+		FeedBox() = delete;
+		FeedBox(FeedBox &) = delete;
+		FeedBox(FeedBox &&) = delete;
+		FeedBox &operator=(FeedBox &) =delete;
+		FeedBox &&operator=(FeedBox &&) =delete;
 		
-		void add_feed(std::string filename, bool is_secure, Context &ctx);
+		void add_feed(std::string filename, bool is_secure);
 		void remove_feed(int fd);
 		
-		void run(Context &ctx);
-		void run_once(Context &ctx);
+		void run();
+		void run_once();
 		
 		void stop();
 	};
