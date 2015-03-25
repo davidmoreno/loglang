@@ -66,7 +66,10 @@ namespace loglang {
 			return;
 		auto begin=std::find_if(std::begin(str), std::end(str), [](char c){ return !isspace(c); });
 		auto end=std::find_if(str.rbegin(), str.rend(), [](char c){ return !isspace(c); });
-		str=std::string( begin, end.base() );
+		if (begin>=end.base())
+			str=std::string();
+		else
+			str=std::string( begin, end.base() );
 	}
 	
 	/// Cleans a line of comments and empt leading and ending spaces.
