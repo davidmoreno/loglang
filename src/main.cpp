@@ -22,13 +22,15 @@
 #include "utils.hpp"
 #include "feedbox.hpp"
 
-std::function<void()> stop_cb;
-bool debug=false;
+namespace loglang{
+	std::function<void()> stop_cb;
+	bool debug=false;
+}
 
 void stop(int){
 	std::cerr<<"exit"<<std::endl;
-	if (stop_cb)
-		stop_cb();
+	if (loglang::stop_cb)
+		loglang::stop_cb();
 }
 
 int main(int argc, char **argv){
@@ -43,12 +45,12 @@ int main(int argc, char **argv){
 	loglang::FeedBox feedbox(context);
 
 // 	context->set_output([](const std::string &output){ std::cout<<">> "<<output<<std::endl; });
-	stop_cb=[&feedbox](){ feedbox.stop(); };
+	loglang::stop_cb=[&feedbox](){ feedbox.stop(); };
 
 	try{
 		for(int i=1;i<argc;i++){
 			if (argv[i]==std::string("--debug"))
-				debug=true;
+				loglang::debug=true;
 			else{
 				try{
 					feedbox.add_feed( argv[i], true);
@@ -66,7 +68,7 @@ int main(int argc, char **argv){
 		std::cerr<<"Uncatched exception. "<<e.what()<<std::endl;
 		return 1;
 	}
-	if (debug){
+	if (loglang::debug){
 		std::cerr<<"--- Final memory status:"<<std::endl;
 		context->debug_values();
 	}

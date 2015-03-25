@@ -20,8 +20,11 @@
 #include "program.hpp"
 #include "parser.hpp"
 
+namespace loglang{
+	extern bool debug;
+}
+
 using namespace loglang;
-extern bool debug;
 
 Program::Program(std::string _name, std::string _sourcecode) : name(std::move(_name)), sourcecode(std::move(_sourcecode))
 {
@@ -32,7 +35,7 @@ Program::Program(std::string _name, std::string _sourcecode) : name(std::move(_n
 	if (debug){
 		std::cerr<<name;
 // 		std::cerr<<" deps "<<std::to_string(_dependencies);
-		std::cerr<<" compiled "<<_sourcecode<<std::endl;
+		std::cerr<<" compiled "<<_sourcecode<<" ast "<<ast->to_string()<<std::endl;
 	}
 }
 

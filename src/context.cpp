@@ -25,7 +25,9 @@
 #include "utils.hpp"
 #include "builtins.hpp"
 
-extern bool debug;
+namespace loglang{
+	extern bool debug;
+}
 
 using namespace loglang;
 
