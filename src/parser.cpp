@@ -253,6 +253,8 @@ AST Parser::parse_val()
 	if (tok.type==Token::NUMBER || tok.type==Token::STRING){
 		return std::make_unique<ast::Value_const>(tok);
 	}
+	if (tok.token=="*") // All vars glob
+		tok.type=Token::VAR; 
 	if (tok.type==Token::VAR){
 		Token &next=tokenizer.next();
 		if (next.type==Token::OPEN_PAREN){
