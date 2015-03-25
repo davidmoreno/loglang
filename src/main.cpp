@@ -23,6 +23,7 @@
 #include "feedbox.hpp"
 
 std::function<void()> stop_cb;
+bool debug=false;
 
 void stop(int){
 	std::cerr<<"exit"<<std::endl;
@@ -34,7 +35,6 @@ int main(int argc, char **argv){
 // 	auto &input=std::cin;
 // 	input.sync_with_stdio(false);
 // 	std::cout.sync_with_stdio(false);
-	bool debug=false;
 	
 	signal(SIGTERM, stop);
 	signal(SIGINT, stop);
@@ -42,7 +42,7 @@ int main(int argc, char **argv){
 	auto context=std::make_shared<loglang::Context>();
 	loglang::FeedBox feedbox(context);
 
-	context->set_output([](const std::string &output){ std::cout<<">> "<<output<<std::endl; });
+// 	context->set_output([](const std::string &output){ std::cout<<">> "<<output<<std::endl; });
 	stop_cb=[&feedbox](){ feedbox.stop(); };
 
 	try{

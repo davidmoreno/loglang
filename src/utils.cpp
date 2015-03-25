@@ -64,6 +64,7 @@ namespace loglang {
 	void trim(std::string &str){
 		if (str.length()==0)
 			return;
+		
 		auto begin=std::find_if(std::begin(str), std::end(str), [](char c){ return !isspace(c); });
 		auto end=std::find_if(str.rbegin(), str.rend(), [](char c){ return !isspace(c); });
 		if (begin>=end.base())
@@ -78,8 +79,7 @@ namespace loglang {
 		if (comment!=std::end(data)){ // Remove comments
 			data.erase(comment, std::end(data));
 		}
-		if (std::isspace(data[0]))
-			trim(data);
+		trim(data);
 	}
 }
 

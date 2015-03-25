@@ -106,6 +106,7 @@ namespace loglang{
 				while (!feof(file)){
 					ssize_t len=getline(&line, &line_size, file);
 					if (len>=0){
+						line[len-1]=0; // Remove \n
 						if (is_secure)
 							ctx.feed_secure(line);
 						else
@@ -212,14 +213,14 @@ void FeedBox::run_once(){
 			--epoll_files;
 			continue;
 		}
-		
-		line=std::string(rline, len);
-		loglang::clean(line);
+		if (len>0){
+			line=std::string(rline, len-1);
 
-		if (feed->is_secure)
-			ctx->feed_secure(line);
-		else
-			ctx->feed(line);
+			if (feed->is_secure)
+				ctx->feed_secure(line);
+			else
+				ctx->feed(line);
+		}
 	}
 }
 

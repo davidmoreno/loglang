@@ -21,16 +21,19 @@
 #include "parser.hpp"
 
 using namespace loglang;
-
+extern bool debug;
 
 Program::Program(std::string _name, std::string _sourcecode) : name(std::move(_name)), sourcecode(std::move(_sourcecode))
 {
 	ast=parse_program(sourcecode);
 	
 	_dependencies=ast->dependencies();
-// 	std::cerr<<name<<std::endl;
-// 	std::cerr<<"deps "<<std::to_string(_dependencies)<<std::endl;
-// 	std::cerr<<"Compile: "<<_sourcecode<<std::endl;
+	
+	if (debug){
+		std::cerr<<name;
+// 		std::cerr<<" deps "<<std::to_string(_dependencies);
+		std::cerr<<" compiled "<<_sourcecode<<std::endl;
+	}
 }
 
 void Program::run(Context& context)

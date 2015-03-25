@@ -25,6 +25,8 @@
 #include "utils.hpp"
 #include "builtins.hpp"
 
+extern bool debug;
+
 using namespace loglang;
 
 Context::Context()
@@ -91,9 +93,15 @@ void Context::feed_secure(std::string data)
 }
 
 void Context::feed(std::string data){
+	::loglang::clean(data);
+	if (data.length()==0)
+		return;
 	auto spacepos=data.find_first_of(' ');
 	auto key=data.substr(0, spacepos);
 	auto value=data.substr(spacepos+1);
+	if (debug){
+		std::cerr<<"Set <"<<key<<"> = <"<<value<<">"<<std::endl;
+	}
 	get_value(key).set(to_any(int64_t(to_number(value))), *this);
 }
 
