@@ -26,7 +26,7 @@
 namespace loglang{
 	class Program;
 	
-	class Context{
+	class Context : public std::enable_shared_from_this<Context>{
 		std::function<void (const std::string &output)> _output;
 		std::unordered_map<std::string, Symbol> symboltable;
 		std::unordered_map<std::string, std::shared_ptr<Program>> glob_dependencies_programs;
