@@ -16,6 +16,7 @@
 
 #include <sys/epoll.h>
 #include <sys/inotify.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
@@ -26,6 +27,9 @@
 #include "feedbox.hpp"
 #include "context.hpp"
 #include "utils.hpp"
+
+#define INOTIFY_EVENT_SIZE  ( sizeof (struct inotify_event) )
+#define INOTIFY_EVENT_BUF_LEN     ( 1024 * ( INOTIFY_EVENT_SIZE + 16 ) )
 
 namespace loglang{
 	extern bool debug;
@@ -84,11 +88,11 @@ namespace loglang{
 			if (wd<0){
 				throw std::runtime_error(std::string("Could not inotify this file: ")+filename);
 			}
+			lineno=0;
 			feed_full_file(ctx);
 			if (debug){
 				std::cerr<<"Inotify open for fd "<<wd<<std::endl;
 			}
-			lineno=0;
 		}
 		FeedFile(FeedFile &) = delete;
 		FeedFile &operator=(FeedFile &) = delete;
@@ -118,7 +122,16 @@ namespace loglang{
 						}
 					}
 				}
-				lineno=current_line; 
+				if (current_line<lineno){ // If lineno is greater, then truncated file
+					if (debug){
+						std::clog<<"File truncated: "<<filename<<std::endl;
+					}
+					lineno=0;
+					feed_full_file(ctx); // Read from start
+				}
+				else{
+					lineno=current_line; 
+				}
 			}
 			catch(...){
 				fclose(file);
@@ -158,7 +171,6 @@ FeedBox::FeedBox(std::shared_ptr<Context> ctx) : ctx(ctx)
 		throw std::runtime_error("Could not poll on inotify descriptor.");
 	}
 	
-	
 	rline=(char*)malloc(1024); // Must be malloc, as internally getline will use realloc
 	rline_size=1024;
 }
@@ -184,6 +196,16 @@ void FeedBox::add_feed(std::string filename, bool is_secure)
 		++epoll_files;
 	}
 	else{
+		struct stat st;
+		if (stat(filename.c_str(), &st)>=0){ // If its a FIFO
+			if (S_ISFIFO(st.st_mode)){
+				auto feed=std::make_shared<FeedStream>(std::move(filename), is_secure, pollfd);
+				feeds.insert(std::make_pair(feed->fd,std::move(feed)));
+				++epoll_files;
+				return;
+			}
+		}
+		
 		auto feed=std::make_shared<FeedFile>(std::move(filename), is_secure, inotifyfd, *ctx);
 		filefeeds.insert(std::make_pair(feed->wd,std::move(feed)));
 	}
@@ -202,9 +224,6 @@ void FeedBox::run(){
 	while (running)
 		run_once();
 }
-#define EVENT_SIZE  ( sizeof (struct inotify_event) )
-#define EVENT_BUF_LEN     ( 1024 * ( EVENT_SIZE + 16 ) )
-
 void FeedBox::run_once(){
 	struct epoll_event events[8];
 	if (epoll_files<=0){
@@ -213,27 +232,26 @@ void FeedBox::run_once(){
 	}
 	int nfds = epoll_wait(pollfd, events, 8, -1);
 	std::string line;
-	
-	char buffer[EVENT_BUF_LEN];
+	char inotify_buffer[INOTIFY_EVENT_BUF_LEN];
 	
 	for(int n = 0; n < nfds; ++n) {
 		if (debug){
 			std::clog<<"Event at fd "<<events[n].data.fd<<" "<<inotifyfd<<std::endl;
 		}
 		if (events[n].data.fd==inotifyfd){
-			ssize_t length = read( inotifyfd, buffer, EVENT_BUF_LEN ); 
+			ssize_t length = read( inotifyfd, inotify_buffer, INOTIFY_EVENT_BUF_LEN ); 
 			if (length<0){
 				perror( "read" );
 				continue;
 			}
 			int i=0;
 			while (i<length){
-				struct inotify_event *event = ( struct inotify_event * ) &buffer[ i ];
+				struct inotify_event *event = ( struct inotify_event * ) &inotify_buffer[ i ];
 				auto feed=filefeeds[event->wd];
 				feed->feed_full_file(*ctx);
 				
 				std::cerr<<"Mask "<<std::hex<<event->mask<<" name "<<(event->len ? event->name : "")<<" wd "<<event->wd<<std::endl;
-				i+=EVENT_SIZE+event->len;
+				i+=INOTIFY_EVENT_SIZE+event->len;
 			}
 		}
 		else{
