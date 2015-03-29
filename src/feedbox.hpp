@@ -28,13 +28,16 @@ namespace loglang{
 	* 
 	* More can be added dynamically if needed.
 	*/
-	class Feed;
+	class FeedStream;
+	class FeedFile;
 	class Context;
 	
 	class FeedBox{
-		std::map<int, std::shared_ptr<Feed>> feeds;
+		std::map<int, std::shared_ptr<FeedStream>> feeds;
+		std::map<int, std::shared_ptr<FeedFile>> filefeeds;
 		int wd; // inotify descriptor
 		int pollfd;
+		int inotifyfd;
 		bool running;
 		char *rline; // Temporal storage for line
 		size_t rline_size;

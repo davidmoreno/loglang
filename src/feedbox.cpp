@@ -15,6 +15,7 @@
  */
 
 #include <sys/epoll.h>
+#include <sys/inotify.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
@@ -27,21 +28,16 @@
 #include "utils.hpp"
 
 namespace loglang{
-	class Feed{
+	extern bool debug;
+	
+	class FeedStream{
 	public:
-		enum type_t{
-			VOID=0,
-			EPOLL,
-			INOTIFY,
-		};
 		bool is_secure;
 		int fd;
 		std::string filename;
 		FILE *file;
-		
-		type_t type;
-		
-		Feed(std::string filename_, bool is_secure, Feed::type_t type) : filename(std::move(filename_)), fd(fd), is_secure(is_secure), type(type){
+
+		FeedStream(std::string filename_, bool is_secure, int epollfd) : filename(std::move(filename_)), is_secure(is_secure){
 			if (filename=="<stdin>") // special name
 				fd=0;
 			else{
@@ -53,49 +49,54 @@ namespace loglang{
 			file=fdopen(fd,"rt");
 			if (!file)
 				throw std::runtime_error("Bad file descriptor");
+			
+			struct epoll_event ev;
+			memset(&ev, 0, sizeof(ev));
+			ev.events=EPOLLIN;
+			ev.data.fd=fd;
+			
+			if (epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &ev) < 0){
+				fclose(file);
+				close(fd);
+				throw std::runtime_error(std::string("Could not add poll descriptor: ")+strerror(errno));
+			}
 		}
-		Feed(): fd(-1), is_secure(false), file(nullptr), type(VOID) {};
-		Feed(Feed &&o){
-			fd=o.fd;
-			file=o.file;
-			type=o.type;
-			o.fd=-1;
-			o.file=nullptr;
-		}
-		~Feed(){
+		FeedStream(FeedStream &) = delete;
+		FeedStream &operator=(FeedStream &) = delete;
+		FeedStream(FeedStream &&) = delete;
+		FeedStream &operator=(FeedStream &&) = delete;
+		~FeedStream(){
 			if (fd>=0){
 				fclose(file);
 				close(fd);
 			}
 		}
+	};
+	class FeedFile{
+	public:
+		bool is_secure;
+		int wd; // inotify wait descriptor
+		std::string filename;
+		int lineno; // Last read line, to skip there. 
 		
-		Feed &operator=(Feed &&o){
-			fd=o.fd;
-			file=o.file;
-			type=o.type;
-			o.fd=-1;
-			o.file=nullptr;
-			return *this;
-		}
-		
-		Feed(Feed &) = delete;
-		Feed &operator=(Feed &) = delete;
-
-
-		void feed(Context &ctx){
-			switch(type){
-			case EPOLL:
-				feed_epoll(ctx);
-				break;
-			case INOTIFY:
-				feed_full_file(ctx);
-				break;
+		FeedFile(std::string filename_, bool is_secure, int inotifyfd, Context &ctx) : filename(std::move(filename_)), is_secure(is_secure){
+			wd = inotify_add_watch( inotifyfd, filename.c_str(), IN_MODIFY | IN_CREATE );
+			if (wd<0){
+				throw std::runtime_error(std::string("Could not inotify this file: ")+filename);
 			}
+			feed_full_file(ctx);
+			if (debug){
+				std::cerr<<"Inotify open for fd "<<wd<<std::endl;
+			}
+			lineno=0;
 		}
-		
-		void feed_epoll(Context &ctx){
+		FeedFile(FeedFile &) = delete;
+		FeedFile &operator=(FeedFile &) = delete;
+		FeedFile(FeedFile &&) = delete;
+		FeedFile &operator=(FeedFile &&) = delete;
+		~FeedFile(){
 		}
-		
+
 		void feed_full_file(Context &ctx){
 			FILE *file=fopen(filename.c_str(), "r");
 			
@@ -103,16 +104,21 @@ namespace loglang{
 			size_t line_size=1024;
 			
 			try{
+				int current_line=0;
 				while (!feof(file)){
 					ssize_t len=getline(&line, &line_size, file);
-					if (len>=0){
-						line[len-1]=0; // Remove \n
-						if (is_secure)
-							ctx.feed_secure(line);
-						else
-							ctx.feed(line);
+					current_line++;
+					if (current_line>=lineno){
+						if (len>=0){
+							line[len-1]=0; // Remove \n
+							if (is_secure)
+								ctx.feed_secure(line);
+							else
+								ctx.feed(line);
+						}
 					}
 				}
+				lineno=current_line; 
 			}
 			catch(...){
 				fclose(file);
@@ -124,7 +130,6 @@ namespace loglang{
 			if (line)
 				free(line);
 		}
-		
 	};
 }
 
@@ -136,6 +141,24 @@ FeedBox::FeedBox(std::shared_ptr<Context> ctx) : ctx(ctx)
 	if (pollfd<0){
 		throw std::runtime_error("Could not create poller descriptor.");
 	}
+	inotifyfd=inotify_init();
+	if (inotifyfd<0){
+		close(pollfd);
+		throw std::runtime_error("Could not create inotify descriptor.");
+	}
+	
+	struct epoll_event ev;
+	memset(&ev, 0, sizeof(ev));
+	ev.events=EPOLLIN;
+	ev.data.fd=inotifyfd;
+	
+	if (epoll_ctl(pollfd, EPOLL_CTL_ADD, inotifyfd, &ev) < 0){
+		close(pollfd);
+		close(inotifyfd);
+		throw std::runtime_error("Could not poll on inotify descriptor.");
+	}
+	
+	
 	rline=(char*)malloc(1024); // Must be malloc, as internally getline will use realloc
 	rline_size=1024;
 }
@@ -144,6 +167,8 @@ FeedBox::~FeedBox()
 {	
 	if (pollfd>=0)
 		close(pollfd);
+	if (inotifyfd>=0)
+		close(inotifyfd);
 	if (rline)
 		free(rline);
 }
@@ -153,29 +178,15 @@ FeedBox::~FeedBox()
  */
 void FeedBox::add_feed(std::string filename, bool is_secure)
 {
-	auto feed=std::make_shared<Feed>(std::move(filename), is_secure, Feed::EPOLL);
-	
-	struct epoll_event ev;
-	memset(&ev, 0, sizeof(ev));
-	ev.events=EPOLLIN;
-	ev.data.fd=feed->fd;
-	
-	if (epoll_ctl(pollfd, EPOLL_CTL_ADD, feed->fd, &ev) < 0){
-		if (errno==EPERM){ // Quite probacly a normal file, so we dont add this as to be feed, but to be inotified and fully read. Fully read now too.
-			feed->type=Feed::INOTIFY;
-		}
-		else
-			throw std::runtime_error(std::string("Could not add poll descriptor: ")+strerror(errno));
-	}
-	
-	
-	if (feed->type==Feed::INOTIFY){
-		feed->feed_full_file(*ctx);
-	}
-	else
+	if (filename=="<stdin>"){
+		auto feed=std::make_shared<FeedStream>(std::move(filename), is_secure, pollfd);
+		feeds.insert(std::make_pair(feed->fd,std::move(feed)));
 		++epoll_files;
-	
-	feeds.insert(std::make_pair(feed->fd,std::move(feed)));
+	}
+	else{
+		auto feed=std::make_shared<FeedFile>(std::move(filename), is_secure, inotifyfd, *ctx);
+		filefeeds.insert(std::make_pair(feed->wd,std::move(feed)));
+	}
 }
 
 void FeedBox::remove_feed(int fd){
@@ -191,6 +202,8 @@ void FeedBox::run(){
 	while (running)
 		run_once();
 }
+#define EVENT_SIZE  ( sizeof (struct inotify_event) )
+#define EVENT_BUF_LEN     ( 1024 * ( EVENT_SIZE + 16 ) )
 
 void FeedBox::run_once(){
 	struct epoll_event events[8];
@@ -200,26 +213,50 @@ void FeedBox::run_once(){
 	}
 	int nfds = epoll_wait(pollfd, events, 8, -1);
 	std::string line;
+	
+	char buffer[EVENT_BUF_LEN];
+	
 	for(int n = 0; n < nfds; ++n) {
-		auto feed=feeds[events[n].data.fd];
-		
-		int len=getline(&rline, &rline_size, feed->file);
-		if (len<0){
-			if (!feof(feed->file))
-				throw std::runtime_error(feed->filename+": Error reading data: "+std::to_string(len)+":"+std::string(strerror(errno)));
-				
-			std::cerr<<feed->filename<<": File closed."<<std::endl;
-			remove_feed(feed->fd);
-			--epoll_files;
-			continue;
+		if (debug){
+			std::clog<<"Event at fd "<<events[n].data.fd<<" "<<inotifyfd<<std::endl;
 		}
-		if (len>0){
-			line=std::string(rline, len-1);
+		if (events[n].data.fd==inotifyfd){
+			ssize_t length = read( inotifyfd, buffer, EVENT_BUF_LEN ); 
+			if (length<0){
+				perror( "read" );
+				continue;
+			}
+			int i=0;
+			while (i<length){
+				struct inotify_event *event = ( struct inotify_event * ) &buffer[ i ];
+				auto feed=filefeeds[event->wd];
+				feed->feed_full_file(*ctx);
+				
+				std::cerr<<"Mask "<<std::hex<<event->mask<<" name "<<(event->len ? event->name : "")<<" wd "<<event->wd<<std::endl;
+				i+=EVENT_SIZE+event->len;
+			}
+		}
+		else{
+			auto feed=feeds[events[n].data.fd];
+			
+			int len=getline(&rline, &rline_size, feed->file);
+			if (len<0){
+				if (!feof(feed->file))
+					throw std::runtime_error(feed->filename+": Error reading data: "+std::to_string(len)+":"+std::string(strerror(errno)));
+					
+				std::cerr<<feed->filename<<": File closed."<<std::endl;
+				remove_feed(feed->fd);
+				--epoll_files;
+				continue;
+			}
+			if (len>0){
+				line=std::string(rline, len-1);
 
-			if (feed->is_secure)
-				ctx->feed_secure(line);
-			else
-				ctx->feed(line);
+				if (feed->is_secure)
+					ctx->feed_secure(line);
+				else
+					ctx->feed(line);
+			}
 		}
 	}
 }
@@ -230,3 +267,4 @@ void FeedBox::stop()
 	close(pollfd); // FIXME Better have a signalfd and signal wakeup
 	pollfd=-1;
 }
+
