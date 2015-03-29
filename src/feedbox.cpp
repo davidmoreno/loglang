@@ -171,6 +171,8 @@ FeedBox::FeedBox(std::shared_ptr<Context> ctx) : ctx(ctx)
 		throw std::runtime_error("Could not poll on inotify descriptor.");
 	}
 	
+	inotify_buffer=std::unique_ptr<char>(new char[INOTIFY_EVENT_BUF_LEN]);
+	
 	rline=(char*)malloc(1024); // Must be malloc, as internally getline will use realloc
 	rline_size=1024;
 }
@@ -232,25 +234,23 @@ void FeedBox::run_once(){
 	}
 	int nfds = epoll_wait(pollfd, events, 8, -1);
 	std::string line;
-	char inotify_buffer[INOTIFY_EVENT_BUF_LEN];
 	
 	for(int n = 0; n < nfds; ++n) {
 		if (debug){
 			std::clog<<"Event at fd "<<events[n].data.fd<<" "<<inotifyfd<<std::endl;
 		}
 		if (events[n].data.fd==inotifyfd){
-			ssize_t length = read( inotifyfd, inotify_buffer, INOTIFY_EVENT_BUF_LEN ); 
+			ssize_t length = read( inotifyfd, inotify_buffer.get(), INOTIFY_EVENT_BUF_LEN ); 
 			if (length<0){
 				perror( "read" );
 				continue;
 			}
 			int i=0;
 			while (i<length){
-				struct inotify_event *event = ( struct inotify_event * ) &inotify_buffer[ i ];
+				struct inotify_event *event = ( struct inotify_event * ) &inotify_buffer.get()[ i ];
 				auto feed=filefeeds[event->wd];
 				feed->feed_full_file(*ctx);
 				
-				std::cerr<<"Mask "<<std::hex<<event->mask<<" name "<<(event->len ? event->name : "")<<" wd "<<event->wd<<std::endl;
 				i+=INOTIFY_EVENT_SIZE+event->len;
 			}
 		}
