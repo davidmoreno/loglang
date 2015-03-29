@@ -27,23 +27,26 @@ namespace loglang{
 	* call the run method.
 	* 
 	* More can be added dynamically if needed.
+	* 
+	* Finally what it does is pass lines to ctx.feed or ctx.feed_secure. It do as necesary read on a pipe, 
+	* reload files, or continue reading files.
 	*/
 	class FeedStream;
 	class FeedFile;
 	class Context;
 	
 	class FeedBox{
-		std::map<int, std::shared_ptr<FeedStream>> feeds;
-		std::map<int, std::shared_ptr<FeedFile>> filefeeds;
+		std::map<int, std::shared_ptr<FeedStream>> feeds; // Pipe feeds, as stdin, or a fifo.
+		std::map<int, std::shared_ptr<FeedFile>> filefeeds; // File feeds, checks for changes, reload it all or from new data (tail -f like).
 		int wd; // inotify descriptor
 		int pollfd;
 		int inotifyfd;
 		bool running;
 		char *rline; // Temporal storage for line
 		size_t rline_size;
-		size_t epoll_files=0;
+		size_t epoll_files=0; // Count of epoll files, need at least one, stdin.
 		std::shared_ptr<Context> ctx;
-		char* inotify_buffer;
+		char* inotify_buffer; // Temporal buffer where inotify data is read.
 	public:
 		FeedBox(std::shared_ptr<Context> ctx);
 		~FeedBox();
