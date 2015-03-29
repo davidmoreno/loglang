@@ -43,7 +43,7 @@ namespace loglang{
 		size_t rline_size;
 		size_t epoll_files=0;
 		std::shared_ptr<Context> ctx;
-		std::unique_ptr<char> inotify_buffer;
+		char* inotify_buffer;
 	public:
 		FeedBox(std::shared_ptr<Context> ctx);
 		~FeedBox();

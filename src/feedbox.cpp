@@ -82,6 +82,8 @@ namespace loglang{
 		int wd; // inotify wait descriptor
 		std::string filename;
 		int lineno; // Last read line, to skip there. 
+		char *line;
+		size_t line_size;
 		
 		FeedFile(std::string filename_, bool is_secure, int inotifyfd, Context &ctx) : filename(std::move(filename_)), is_secure(is_secure){
 			wd = inotify_add_watch( inotifyfd, filename.c_str(), IN_MODIFY | IN_CREATE );
@@ -89,6 +91,8 @@ namespace loglang{
 				throw std::runtime_error(std::string("Could not inotify this file: ")+filename);
 			}
 			lineno=0;
+			line=(char*)malloc(1024);
+			line_size=1024;
 			feed_full_file(ctx);
 			if (debug){
 				std::cerr<<"Inotify open for fd "<<wd<<std::endl;
@@ -99,13 +103,11 @@ namespace loglang{
 		FeedFile(FeedFile &&) = delete;
 		FeedFile &operator=(FeedFile &&) = delete;
 		~FeedFile(){
+			free(line);
 		}
 
 		void feed_full_file(Context &ctx){
 			FILE *file=fopen(filename.c_str(), "r");
-			
-			char *line=(char*)malloc(1024);
-			size_t line_size=1024;
 			
 			try{
 				int current_line=0;
@@ -135,20 +137,16 @@ namespace loglang{
 			}
 			catch(...){
 				fclose(file);
-				if (line)
-					free(line);
 				throw;
 			}
 			fclose(file);
-			if (line)
-				free(line);
 		}
 	};
 }
 
 using namespace loglang;
 
-FeedBox::FeedBox(std::shared_ptr<Context> ctx) : ctx(ctx)
+FeedBox::FeedBox(std::shared_ptr<Context> ctx) : ctx(ctx), rline(nullptr), inotify_buffer(nullptr)
 {
 	pollfd=epoll_create(8);
 	if (pollfd<0){
@@ -171,8 +169,7 @@ FeedBox::FeedBox(std::shared_ptr<Context> ctx) : ctx(ctx)
 		throw std::runtime_error("Could not poll on inotify descriptor.");
 	}
 	
-	inotify_buffer=std::unique_ptr<char>(new char[INOTIFY_EVENT_BUF_LEN]);
-	
+	inotify_buffer=(char*)malloc(INOTIFY_EVENT_BUF_LEN);
 	rline=(char*)malloc(1024); // Must be malloc, as internally getline will use realloc
 	rline_size=1024;
 }
@@ -185,6 +182,8 @@ FeedBox::~FeedBox()
 		close(inotifyfd);
 	if (rline)
 		free(rline);
+	if (inotify_buffer)
+		free(inotify_buffer);
 }
 
 /**
@@ -240,14 +239,14 @@ void FeedBox::run_once(){
 			std::clog<<"Event at fd "<<events[n].data.fd<<" "<<inotifyfd<<std::endl;
 		}
 		if (events[n].data.fd==inotifyfd){
-			ssize_t length = read( inotifyfd, inotify_buffer.get(), INOTIFY_EVENT_BUF_LEN ); 
+			ssize_t length = read( inotifyfd, inotify_buffer, INOTIFY_EVENT_BUF_LEN ); 
 			if (length<0){
 				perror( "read" );
 				continue;
 			}
 			int i=0;
 			while (i<length){
-				struct inotify_event *event = ( struct inotify_event * ) &inotify_buffer.get()[ i ];
+				struct inotify_event *event = ( struct inotify_event * ) &inotify_buffer[ i ];
 				auto feed=filefeeds[event->wd];
 				feed->feed_full_file(*ctx);
 				
